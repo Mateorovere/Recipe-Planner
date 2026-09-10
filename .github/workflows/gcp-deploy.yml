@@ -1,0 +1,122 @@
+name: GCP Deploy (template)
+
+# TEMPLATE — inert until configured.
+#
+# This workflow is NOT wired into CI: it only runs when manually triggered
+# (workflow_dispatch), and every step that talks to GCP is skipped unless the
+# `GCP_PROJECT_ID` and `GCP_WORKLOAD_IDENTITY_PROVIDER` repository variables/
+# secrets described below are set. Pushing to main or opening a PR never
+# triggers this workflow and never requires GCP credentials.
+#
+# To actually use it:
+#   1. Create a GCP project, an Artifact Registry Docker repo, a Cloud SQL for
+#      PostgreSQL instance, and the secrets below in Secret Manager
+#      (recipe-ai-secret-key, recipe-ai-database-url, recipe-ai-openai-api-key).
+#   2. Set up Workload Identity Federation (preferred over a JSON key) for
+#      GitHub Actions -> GCP, per:
+#      https://github.com/google-github-actions/auth#setting-up-workload-identity-federation
+#   3. Add these as repository variables (Settings -> Secrets and variables ->
+#      Actions -> Variables): GCP_PROJECT_ID, GCP_REGION, GCP_WORKLOAD_IDENTITY_PROVIDER,
+#      GCP_SERVICE_ACCOUNT, ARTIFACT_REGISTRY_REPO.
+#   4. Run this workflow via the Actions tab ("Run workflow").
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options: ["staging", "production"]
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+jobs:
+  check-configured:
+    name: Check GCP configuration is present
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ vars.GCP_PROJECT_ID }}" ] && [ -n "${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::GCP_PROJECT_ID / GCP_WORKLOAD_IDENTITY_PROVIDER repo variables are not set. \
+            This is a template workflow - see the comments at the top of gcp-deploy.yml. Skipping deploy."
+          fi
+
+  build-and-push:
+    name: Build & push images to Artifact Registry
+    needs: check-configured
+    if: needs.check-configured.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & push backend image
+        run: |
+          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}"
+          docker build -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+
+      - name: Build & push frontend image
+        run: |
+          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/frontend:${{ github.sha }}"
+          docker build -t "$IMAGE" --target production ./frontend
+          docker push "$IMAGE"
+
+  deploy-cloud-run:
+    name: Deploy to Cloud Run
+    needs: [check-configured, build-and-push]
+    if: needs.check-configured.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Cloud SQL connectivity: pass DATABASE_URL via Secret Manager
+      # (recipe-ai-database-url), using the Cloud SQL Auth Proxy socket format,
+      # e.g. postgresql+asyncpg://user:pass@/dbname?host=/cloudsql/PROJECT:REGION:INSTANCE
+      - name: Deploy backend
+        run: |
+          gcloud run deploy recipe-ai-backend-${{ github.event.inputs.environment }} \
+            --image "${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/backend:${{ github.sha }}" \
+            --region "${{ vars.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --add-cloudsql-instances "${{ vars.GCP_CLOUDSQL_INSTANCE }}" \
+            --set-secrets "SECRET_KEY=recipe-ai-secret-key:latest,DATABASE_URL=recipe-ai-database-url:latest,OPENAI_API_KEY=recipe-ai-openai-api-key:latest" \
+            --set-env-vars "ENVIRONMENT=production,VISION_PROVIDER=openai,LLM_PROVIDER=openai,NUTRITION_PROVIDER=openai,SPEECH_PROVIDER=local_whisper"
+
+      - name: Deploy frontend
+        run: |
+          gcloud run deploy recipe-ai-frontend-${{ github.event.inputs.environment }} \
+            --image "${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/frontend:${{ github.sha }}" \
+            --region "${{ vars.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated
