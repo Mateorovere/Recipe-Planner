@@ -1,0 +1,66 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Backend hooks run through `uv run` against backend/.venv (created by `uv sync`)
+  # so they use the exact pinned versions from backend/uv.lock, not a separate
+  # pre-commit-managed environment.
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format (backend)
+        entry: bash -c 'cd backend && uv run ruff format app tests'
+        language: system
+        files: ^backend/(app|tests)/.*\.py$
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff check (backend)
+        entry: bash -c 'cd backend && uv run ruff check app tests --fix'
+        language: system
+        files: ^backend/(app|tests)/.*\.py$
+        pass_filenames: false
+
+      - id: mypy
+        name: mypy (backend)
+        entry: bash -c 'cd backend && uv run mypy app'
+        language: system
+        files: ^backend/app/.*\.py$
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest (backend)
+        entry: bash -c 'cd backend && uv run pytest -q'
+        language: system
+        files: ^backend/(app|tests)/.*\.py$
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        files: ^frontend/src/.*\.tsx?$
+        pass_filenames: false
+
+      - id: prettier
+        name: prettier --check (frontend)
+        entry: bash -c 'cd frontend && npm run format:check'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx|css)$
+        pass_filenames: false
+
+      - id: tsc
+        name: typecheck (frontend)
+        entry: bash -c 'cd frontend && npm run typecheck'
+        language: system
+        files: ^frontend/src/.*\.tsx?$
+        pass_filenames: false
