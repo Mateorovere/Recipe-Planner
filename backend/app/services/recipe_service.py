@@ -19,6 +19,7 @@ from app.core.exceptions import AIProviderError, NoMatchingRecipesError, NotFoun
 from app.models.enums import IngredientImportance, NutritionSource
 from app.models.nutrition import NutritionInformation
 from app.models.recipe import Recipe
+from app.repositories.favorite_repository import FavoriteRepository
 from app.repositories.ingredient_repository import IngredientRepository
 from app.repositories.recipe_repository import RecipeRepository
 from app.repositories.search_repository import SearchRepository
@@ -71,6 +72,7 @@ class RecipeService:
         self._ingredients = IngredientRepository(session)
         self._normalizer = IngredientNormalizer(session)
         self._searches = SearchRepository(session)
+        self._favorites = FavoriteRepository(session)
 
     # ------------------------------------------------------------------ search
 
@@ -134,6 +136,9 @@ class RecipeService:
 
         nutrition = await self._get_or_estimate_nutrition(recipe)
         substitutions = await self._build_substitutions(recipe)
+        is_favorited = (
+            await self._favorites.is_favorited(user_id, recipe_id) if user_id is not None else False
+        )
 
         summary = self._to_summary(scored)
         return RecipeDetail(
@@ -156,6 +161,7 @@ class RecipeService:
             nutrition=nutrition,
             match_explanation=scored.explanation,
             substitutions=substitutions,
+            is_favorited=is_favorited,
         )
 
     # ------------------------------------------------------------------ scoring

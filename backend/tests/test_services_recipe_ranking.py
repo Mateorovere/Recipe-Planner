@@ -158,6 +158,27 @@ async def test_get_detail_reports_have_flags_and_explanation(db_session: AsyncSe
     assert "1/4" in detail.match_explanation
 
 
+async def test_get_detail_reports_is_favorited(db_session: AsyncSession) -> None:
+    from app.repositories.favorite_repository import FavoriteRepository
+    from app.repositories.user_repository import UserRepository
+
+    seeded = await seed_basic_recipes(db_session)
+    user = await UserRepository(db_session).create(
+        email="fav@example.com", hashed_password="x", full_name=None
+    )
+    await db_session.commit()
+
+    service = _service(db_session)
+    before = await service.get_detail(seeded["omelette"].id, raw_ingredients=[], user_id=user.id)
+    assert before.is_favorited is False
+
+    await FavoriteRepository(db_session).add(user.id, seeded["omelette"].id)
+    await db_session.commit()
+
+    after = await service.get_detail(seeded["omelette"].id, raw_ingredients=[], user_id=user.id)
+    assert after.is_favorited is True
+
+
 async def test_get_detail_includes_substitutions(db_session: AsyncSession) -> None:
     seeded = await seed_basic_recipes(db_session)
 
