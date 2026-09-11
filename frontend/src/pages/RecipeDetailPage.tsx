@@ -6,6 +6,7 @@ import { Skeleton } from "../components/common/Skeleton";
 import { useFavorites, useToggleFavorite } from "../hooks/useFavorites";
 import { useRecipeDetail } from "../hooks/useRecipeSearch";
 import { useAuthStore } from "../state/authStore";
+import { DIFFICULTY_ICON } from "../utils/recipeDisplay";
 
 const NUTRITION_SOURCE_LABEL: Record<string, string> = {
   calculated: "Calculated from ingredients",
@@ -13,8 +14,6 @@ const NUTRITION_SOURCE_LABEL: Record<string, string> = {
   database: "From our recipe database",
   ai_generated: "AI-estimated — not medically precise",
 };
-
-const DIFFICULTY_ICON: Record<string, string> = { easy: "🟢", medium: "🟡", hard: "🔴" };
 
 export function RecipeDetailPage() {
   const params = useParams<{ recipeId: string }>();

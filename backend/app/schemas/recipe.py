@@ -86,13 +86,6 @@ class RecipeSearchResponse(BaseModel):
     recipes: list[RecipeSummary]
 
 
-class SavedRecipeItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    recipe_id: int
-    created_at: datetime
-
-
 class SearchHistoryItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

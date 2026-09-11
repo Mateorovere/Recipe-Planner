@@ -34,10 +34,6 @@ _SUPPORTED_AUDIO_TYPES = {
     "audio/mp4",
 }
 
-# Detections below this confidence are still shown to the user (never silently
-# dropped) but are flagged so the UI can visually de-emphasize them.
-LOW_CONFIDENCE_THRESHOLD = 0.5
-
 
 class IngredientService:
     def __init__(

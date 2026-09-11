@@ -30,19 +30,9 @@ class ConflictError(AppError):
     code = "conflict"
 
 
-class ValidationAppError(AppError):
-    status_code = 422
-    code = "validation_error"
-
-
 class AuthenticationError(AppError):
     status_code = 401
     code = "authentication_error"
-
-
-class AuthorizationError(AppError):
-    status_code = 403
-    code = "authorization_error"
 
 
 class NoIngredientsDetectedError(AppError):
@@ -70,8 +60,3 @@ class AIProviderError(AppError):
 class AIRateLimitError(AIProviderError):
     status_code = 429
     code = "ai_rate_limited"
-
-
-class DatabaseUnavailableError(AppError):
-    status_code = 503
-    code = "database_unavailable"

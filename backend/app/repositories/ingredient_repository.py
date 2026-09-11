@@ -30,14 +30,6 @@ class IngredientRepository:
         result = await self._session.execute(select(Ingredient))
         return list(result.scalars().all())
 
-    async def get_by_ids(self, ingredient_ids: list[int]) -> list[Ingredient]:
-        if not ingredient_ids:
-            return []
-        result = await self._session.execute(
-            select(Ingredient).where(Ingredient.id.in_(ingredient_ids))
-        )
-        return list(result.scalars().all())
-
     async def get_or_create(self, name: str, *, category: str | None = None) -> Ingredient:
         """Look up a canonical ingredient by exact name/alias, creating one if the
         AI introduced a name that isn't in the dictionary yet."""

@@ -2,7 +2,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-gray-200 ${className}`} />;
 }
 
-export function RecipeCardSkeleton() {
+function RecipeCardSkeleton() {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 p-4">
       <Skeleton className="h-36 w-full" />

@@ -1,12 +1,7 @@
 import { Link } from "react-router-dom";
 
 import type { RecipeSummary } from "../../types/recipe";
-
-const DIFFICULTY_ICON: Record<string, string> = {
-  easy: "🟢",
-  medium: "🟡",
-  hard: "🔴",
-};
+import { DIFFICULTY_ICON } from "../../utils/recipeDisplay";
 
 interface RecipeCardProps {
   recipe: RecipeSummary;

@@ -1,8 +1,8 @@
-"""Async SQLAlchemy engine/session factory.
+"""Async SQLAlchemy engine/session factory for the running app.
 
-`get_engine`/`get_sessionmaker` are cached on the settings' `database_url` so tests
-can point at an isolated SQLite database (see `tests/conftest.py`) while the running
-app uses Postgres, without any global mutable state.
+Tests use their own separate in-memory engine (see `tests/conftest.py`) rather
+than this module, so these stay simple, argument-free cached singletons bound to
+`Settings.database_url`.
 """
 
 from __future__ import annotations
@@ -21,17 +21,15 @@ from app.core.config import get_settings
 
 
 @lru_cache
-def get_engine(database_url: str | None = None) -> AsyncEngine:
-    url = database_url or get_settings().database_url
+def get_engine() -> AsyncEngine:
+    url = get_settings().database_url
     connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
     return create_async_engine(url, pool_pre_ping=True, connect_args=connect_args)
 
 
 @lru_cache
-def get_sessionmaker(database_url: str | None = None) -> async_sessionmaker[AsyncSession]:
-    return async_sessionmaker(
-        bind=get_engine(database_url), expire_on_commit=False, autoflush=False
-    )
+def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(bind=get_engine(), expire_on_commit=False, autoflush=False)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession]:
