@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { Button } from "../components/common/Button";
 import { ErrorState } from "../components/common/ErrorState";
@@ -19,17 +19,9 @@ const DIFFICULTY_ICON: Record<string, string> = { easy: "🟢", medium: "🟡", 
 export function RecipeDetailPage() {
   const params = useParams<{ recipeId: string }>();
   const recipeId = params.recipeId ? Number(params.recipeId) : undefined;
-  const [searchParams] = useSearchParams();
-  const ingredients = searchParams.getAll("ingredients");
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const {
-    data: recipe,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useRecipeDetail(recipeId, ingredients);
+  const { data: recipe, isLoading, isError, error, refetch } = useRecipeDetail(recipeId);
   useFavorites(); // warms the favorites cache so the toggle below feels instant
   const { add, remove } = useToggleFavorite(recipeId ?? -1);
 

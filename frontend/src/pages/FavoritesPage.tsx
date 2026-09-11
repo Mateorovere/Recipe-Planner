@@ -41,7 +41,7 @@ export function FavoritesPage() {
           description="Tap the heart on any recipe to save it here."
         />
       )}
-      {data && data.length > 0 && <RecipeList recipes={data} ingredients={[]} />}
+      {data && data.length > 0 && <RecipeList recipes={data} />}
     </div>
   );
 }

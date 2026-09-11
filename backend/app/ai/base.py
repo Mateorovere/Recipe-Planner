@@ -11,10 +11,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from app.ai.types import (
-    NutritionEstimate,
+    GeneratedRecipe,
+    GenerationFilters,
+    IngredientQuantity,
     RawDetectedIngredient,
-    RecipeRerankCandidate,
-    RerankResult,
 )
 
 
@@ -35,21 +35,25 @@ class SpeechProvider(ABC):
 
 
 class LLMProvider(ABC):
-    """Free text -> candidate ingredients, plus recipe reranking/explanations."""
+    """Free text -> candidate ingredients."""
 
     @abstractmethod
     async def extract_ingredients(self, text: str) -> list[RawDetectedIngredient]: ...
 
+
+class RecipeGenerationProvider(ABC):
+    """Ingredients (+ quantities) -> freshly generated, complete recipes.
+
+    Recipes are generated directly from what the user has on hand — no database
+    lookup. Each returned recipe already includes its nutrition estimate and a
+    short explanation of why it fits the given ingredients, in a single call.
+    """
+
     @abstractmethod
-    async def rerank(
-        self, candidates: list[RecipeRerankCandidate], user_ingredients: list[str]
-    ) -> list[RerankResult]: ...
-
-
-class NutritionProvider(ABC):
-    """Recipe -> estimated nutrition facts (always labeled with its source)."""
-
-    @abstractmethod
-    async def estimate(
-        self, *, title: str, ingredients: list[str], servings: int
-    ) -> NutritionEstimate: ...
+    async def generate_recipes(
+        self,
+        ingredients: list[IngredientQuantity],
+        *,
+        filters: GenerationFilters | None,
+        count: int,
+    ) -> list[GeneratedRecipe]: ...

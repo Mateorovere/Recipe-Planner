@@ -95,6 +95,19 @@ async def test_low_confidence_detections_are_still_returned(
     assert body[0]["confidence"] == pytest.approx(0.2)
 
 
+async def test_detected_quantity_and_unit_are_passed_through(
+    client: AsyncClient, fake_llm: FakeLLMProvider
+) -> None:
+    fake_llm.forced_ingredients = [
+        RawDetectedIngredient(name="egg", confidence=0.9, quantity=2, unit="unit")
+    ]
+    response = await client.post("/api/v1/ingredients/text", json={"text": "I have 2 eggs"})
+    assert response.status_code == 200
+    ingredient = response.json()["ingredients"][0]
+    assert ingredient["quantity"] == 2
+    assert ingredient["unit"] == "unit"
+
+
 async def test_ingredient_history_recorded_for_authenticated_user(
     client: AsyncClient, auth_headers: dict[str, str]
 ) -> None:

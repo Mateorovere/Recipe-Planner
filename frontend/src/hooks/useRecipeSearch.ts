@@ -1,9 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { getRecipe, searchRecipes } from "../api/recipes";
+import type { IngredientQuantity } from "../types/ingredient";
 import type { RecipeSearchFilters } from "../types/recipe";
 
-export function useRecipeSearchResults(ingredients: string[], filters?: RecipeSearchFilters) {
+export function useRecipeSearchResults(
+  ingredients: IngredientQuantity[],
+  filters?: RecipeSearchFilters,
+) {
   return useQuery({
     queryKey: ["recipe-search", ingredients, filters],
     queryFn: () => searchRecipes(ingredients, filters),
@@ -12,10 +16,10 @@ export function useRecipeSearchResults(ingredients: string[], filters?: RecipeSe
   });
 }
 
-export function useRecipeDetail(recipeId: number | undefined, ingredients: string[]) {
+export function useRecipeDetail(recipeId: number | undefined) {
   return useQuery({
-    queryKey: ["recipe", recipeId, ingredients],
-    queryFn: () => getRecipe(recipeId as number, ingredients),
+    queryKey: ["recipe", recipeId],
+    queryFn: () => getRecipe(recipeId as number),
     enabled: recipeId !== undefined,
   });
 }

@@ -11,11 +11,14 @@ _SYSTEM_PROMPT = (
     "You are a culinary vision assistant. Identify every distinct food ingredient "
     "visible in the photo. Ignore packaging, utensils, and non-food items. "
     "Respond ONLY with JSON of the shape "
-    '{"ingredients": [{"name": "tomato", "confidence": 0.96}, ...]}. '
-    "`name` must be a singular, lowercase, common ingredient name. "
-    "`confidence` is your own calibrated estimate between 0 and 1 of how certain you "
-    "are that ingredient is actually present. If you cannot identify any food, "
-    'return {"ingredients": []}.'
+    '{"ingredients": [{"name": "tomato", "confidence": 0.96, "quantity": 3, '
+    '"unit": "unit"}, ...]}. `name` must be a singular, lowercase, common '
+    "ingredient name. `confidence` is your own calibrated estimate between 0 and 1 "
+    "of how certain you are that ingredient is actually present. `quantity`/`unit` "
+    "are a best-effort visual estimate (e.g. a visible count of whole items, or an "
+    "approximate weight/volume for bulk ingredients) - use null for both if you "
+    "cannot reasonably estimate an amount. If you cannot identify any food, return "
+    '{"ingredients": []}.'
 )
 
 
@@ -50,10 +53,14 @@ class OpenAIVisionProvider(VisionProvider):
             if not name:
                 continue
             confidence = item.get("confidence")
+            quantity = item.get("quantity")
+            unit = item.get("unit")
             detected.append(
                 RawDetectedIngredient(
                     name=name,
                     confidence=float(confidence) if confidence is not None else None,
+                    quantity=float(quantity) if quantity is not None else None,
+                    unit=str(unit) if unit else None,
                 )
             )
         return detected

@@ -13,6 +13,8 @@ class DetectedIngredient(BaseModel):
     name: str
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     source: IngredientInputSource
+    quantity: float | None = Field(default=None, gt=0)
+    unit: str | None = None
 
 
 class TextIngredientRequest(BaseModel):
@@ -32,4 +34,14 @@ class IngredientHistoryItem(BaseModel):
     raw_label: str
     source: IngredientInputSource
     confidence: float | None
+    quantity: float | None
+    unit: str | None
     created_at: datetime
+
+
+class IngredientQuantityInput(BaseModel):
+    """One ingredient the user has, as sent into recipe generation."""
+
+    name: str = Field(min_length=1, max_length=120)
+    quantity: float | None = Field(default=None, gt=0)
+    unit: str | None = Field(default=None, max_length=30)

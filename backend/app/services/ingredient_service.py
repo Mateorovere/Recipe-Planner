@@ -15,7 +15,10 @@ from app.ai.base import LLMProvider, SpeechProvider, VisionProvider
 from app.ai.types import RawDetectedIngredient
 from app.core.exceptions import NoIngredientsDetectedError, UnsupportedMediaError
 from app.models.enums import IngredientInputSource
-from app.repositories.user_ingredient_repository import UserIngredientRepository
+from app.repositories.user_ingredient_repository import (
+    UserIngredientRecord,
+    UserIngredientRepository,
+)
 from app.schemas.ingredient import DetectedIngredient, IngredientExtractionResponse
 from app.services.ingredient_normalization import IngredientNormalizer
 
@@ -113,16 +116,30 @@ class IngredientService:
         if user_id is not None:
             normalized = await self._normalizer.normalize_many([d.name for d in deduped])
             by_raw = {n.raw_name: n for n in normalized}
-            history_items: list[tuple[str, int | None, float | None]] = []
+            history_items: list[UserIngredientRecord] = []
             for item in deduped:
                 matched = by_raw[item.name].ingredient
-                history_items.append((item.name, matched.id if matched else None, item.confidence))
+                history_items.append(
+                    UserIngredientRecord(
+                        raw_label=item.name,
+                        ingredient_id=matched.id if matched else None,
+                        confidence=item.confidence,
+                        quantity=item.quantity,
+                        unit=item.unit,
+                    )
+                )
             await self._history.record_many(user_id=user_id, source=source, items=history_items)
             await self._session.commit()
 
         return IngredientExtractionResponse(
             ingredients=[
-                DetectedIngredient(name=item.name, confidence=item.confidence, source=source)
+                DetectedIngredient(
+                    name=item.name,
+                    confidence=item.confidence,
+                    source=source,
+                    quantity=item.quantity,
+                    unit=item.unit,
+                )
                 for item in deduped
             ]
         )

@@ -21,7 +21,6 @@ export interface RecipeSummary {
 
 export interface RecipeSearchResponse {
   recipes: RecipeSummary[];
-  ai_reranked: boolean;
 }
 
 export interface RecipeIngredientView {
@@ -70,7 +69,7 @@ export interface RecipeSearchFilters {
 
 export interface SearchHistoryItem {
   id: number;
-  query_ingredients: string[];
+  query_ingredients: { name: string; quantity: number | null; unit: string | null }[];
   results_count: number;
   created_at: string;
 }

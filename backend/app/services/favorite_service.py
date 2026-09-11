@@ -9,6 +9,7 @@ from app.repositories.search_repository import SearchRepository
 from app.repositories.user_ingredient_repository import UserIngredientRepository
 from app.schemas.ingredient import IngredientHistoryItem
 from app.schemas.recipe import RecipeSummary, SearchHistoryItem
+from app.services.recipe_presentation import recipe_to_summary
 
 
 class FavoriteService:
@@ -34,31 +35,7 @@ class FavoriteService:
         saved = await self._favorites.list_for_user(user_id)
         recipes = await self._recipes.get_by_ids([s.recipe_id for s in saved])
         by_id = {r.id: r for r in recipes}
-        summaries = []
-        for s in saved:
-            recipe = by_id.get(s.recipe_id)
-            if recipe is None:
-                continue
-            total = len(recipe.recipe_ingredients)
-            summaries.append(
-                RecipeSummary(
-                    id=recipe.id,
-                    title=recipe.title,
-                    slug=recipe.slug,
-                    image_url=recipe.image_url,
-                    description=recipe.description,
-                    prep_time_minutes=recipe.prep_time_minutes,
-                    cook_time_minutes=recipe.cook_time_minutes,
-                    total_time_minutes=recipe.total_time_minutes,
-                    difficulty=recipe.difficulty,
-                    servings=recipe.servings,
-                    match_percentage=0.0,
-                    matched_ingredient_count=0,
-                    total_ingredient_count=total,
-                    missing_ingredients=[ri.ingredient.name for ri in recipe.recipe_ingredients],
-                )
-            )
-        return summaries
+        return [recipe_to_summary(by_id[s.recipe_id]) for s in saved if s.recipe_id in by_id]
 
 
 class HistoryService:

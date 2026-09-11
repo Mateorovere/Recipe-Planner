@@ -17,7 +17,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 VisionProviderName = Literal["openai"]
 LLMProviderName = Literal["openai"]
 SpeechProviderName = Literal["local_whisper", "openai"]
-NutritionProviderName = Literal["openai"]
+RecipeGenerationProviderName = Literal["openai"]
 
 
 class Settings(BaseSettings):
@@ -59,17 +59,16 @@ class Settings(BaseSettings):
     speech_provider: SpeechProviderName = Field(
         default="local_whisper", validation_alias="SPEECH_PROVIDER"
     )
-    nutrition_provider: NutritionProviderName = Field(
-        default="openai", validation_alias="NUTRITION_PROVIDER"
+    recipe_generation_provider: RecipeGenerationProviderName = Field(
+        default="openai", validation_alias="RECIPE_GENERATION_PROVIDER"
     )
-    ai_rerank_enabled: bool = Field(default=True, validation_alias="AI_RERANK_ENABLED")
 
     # --- OpenAI ---
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
     openai_vision_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_VISION_MODEL")
     openai_llm_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_LLM_MODEL")
-    openai_nutrition_model: str = Field(
-        default="gpt-4o-mini", validation_alias="OPENAI_NUTRITION_MODEL"
+    openai_recipe_generation_model: str = Field(
+        default="gpt-4o-mini", validation_alias="OPENAI_RECIPE_GENERATION_MODEL"
     )
 
     # --- Local Whisper (speech-to-text) ---
@@ -77,8 +76,8 @@ class Settings(BaseSettings):
     whisper_device: str = Field(default="cpu", validation_alias="WHISPER_DEVICE")
     whisper_compute_type: str = Field(default="int8", validation_alias="WHISPER_COMPUTE_TYPE")
 
-    # --- Recipe retrieval ---
-    recipe_search_top_n: int = Field(default=10, validation_alias="RECIPE_SEARCH_TOP_N")
+    # --- Recipe generation ---
+    recipes_per_search: int = Field(default=5, validation_alias="RECIPES_PER_SEARCH")
 
     @model_validator(mode="after")
     def _validate_required_secrets(self) -> Settings:
@@ -95,7 +94,7 @@ class Settings(BaseSettings):
         uses_openai = "openai" in (
             self.vision_provider,
             self.llm_provider,
-            self.nutrition_provider,
+            self.recipe_generation_provider,
             self.speech_provider,
         )
         if uses_openai and not self.openai_api_key:

@@ -11,7 +11,11 @@ class SearchRepository:
         self._session = session
 
     async def record(
-        self, *, user_id: int | None, query_ingredients: list[str], results_count: int
+        self,
+        *,
+        user_id: int | None,
+        query_ingredients: list[dict[str, object]],
+        results_count: int,
     ) -> RecipeSearch:
         search = RecipeSearch(
             user_id=user_id, query_ingredients=query_ingredients, results_count=results_count

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum, Float, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum, Float, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -32,6 +32,8 @@ class RecipeIngredient(Base):
         nullable=False,
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    user_has: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    """Whether this ingredient came from the user's list at generation time."""
 
     recipe: Mapped[Recipe] = relationship(back_populates="recipe_ingredients")
     ingredient: Mapped[Ingredient] = relationship()

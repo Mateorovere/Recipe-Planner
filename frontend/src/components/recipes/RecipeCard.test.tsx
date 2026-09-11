@@ -26,7 +26,7 @@ describe("RecipeCard", () => {
   it("renders the recipe summary information", () => {
     render(
       <MemoryRouter>
-        <RecipeCard recipe={recipe} ingredients={["chicken", "rice"]} />
+        <RecipeCard recipe={recipe} />
       </MemoryRouter>,
     );
 
@@ -37,14 +37,14 @@ describe("RecipeCard", () => {
     expect(screen.getByText(/missing: sesame oil/i)).toBeInTheDocument();
   });
 
-  it("links to the recipe detail page carrying the searched ingredients", () => {
+  it("links to the recipe's persisted detail page", () => {
     render(
       <MemoryRouter>
-        <RecipeCard recipe={recipe} ingredients={["chicken", "rice"]} />
+        <RecipeCard recipe={recipe} />
       </MemoryRouter>,
     );
 
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/recipes/42?ingredients=chicken&ingredients=rice");
+    expect(link).toHaveAttribute("href", "/recipes/42");
   });
 });

@@ -1,10 +1,21 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import IngredientInputSource
 from app.models.user_ingredient import UserIngredient
+
+
+@dataclass(frozen=True, slots=True)
+class UserIngredientRecord:
+    raw_label: str
+    ingredient_id: int | None
+    confidence: float | None
+    quantity: float | None = None
+    unit: str | None = None
 
 
 class UserIngredientRepository:
@@ -16,18 +27,19 @@ class UserIngredientRepository:
         *,
         user_id: int,
         source: IngredientInputSource,
-        items: list[tuple[str, int | None, float | None]],
+        items: list[UserIngredientRecord],
     ) -> list[UserIngredient]:
-        """`items` is a list of (raw_label, matched_ingredient_id, confidence)."""
         records = [
             UserIngredient(
                 user_id=user_id,
-                raw_label=raw_label,
-                ingredient_id=ingredient_id,
-                confidence=confidence,
+                raw_label=item.raw_label,
+                ingredient_id=item.ingredient_id,
+                confidence=item.confidence,
+                quantity=item.quantity,
+                unit=item.unit,
                 source=source,
             )
-            for raw_label, ingredient_id, confidence in items
+            for item in items
         ]
         self._session.add_all(records)
         await self._session.flush()

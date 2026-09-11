@@ -31,6 +31,8 @@ class UserIngredient(Base):
         Enum(IngredientInputSource, native_enum=False, length=20), nullable=False
     )
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    quantity: Mapped[float | None] = mapped_column(Float, nullable=True)
+    unit: Mapped[str | None] = mapped_column(String(30), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )

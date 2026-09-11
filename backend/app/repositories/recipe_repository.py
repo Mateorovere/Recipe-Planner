@@ -33,19 +33,6 @@ class RecipeRepository:
         )
         return list(result.scalars().all())
 
-    async def find_candidates_by_ingredient_ids(self, ingredient_ids: list[int]) -> list[Recipe]:
-        """Any recipe that uses at least one of the given ingredients."""
-        if not ingredient_ids:
-            return []
-        result = await self._session.execute(
-            select(Recipe)
-            .join(RecipeIngredient, RecipeIngredient.recipe_id == Recipe.id)
-            .where(RecipeIngredient.ingredient_id.in_(ingredient_ids))
-            .distinct()
-            .options(*_EAGER_LOAD)
-        )
-        return list(result.scalars().unique().all())
-
-    async def list_all(self) -> list[Recipe]:
-        result = await self._session.execute(select(Recipe).options(*_EAGER_LOAD))
-        return list(result.scalars().unique().all())
+    async def slug_exists(self, slug: str) -> bool:
+        result = await self._session.execute(select(Recipe.id).where(Recipe.slug == slug))
+        return result.scalar_one_or_none() is not None

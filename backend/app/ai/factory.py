@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from app.ai.base import LLMProvider, NutritionProvider, SpeechProvider, VisionProvider
+from app.ai.base import LLMProvider, RecipeGenerationProvider, SpeechProvider, VisionProvider
 from app.core.config import Settings, get_settings
 
 
@@ -54,12 +54,12 @@ def get_speech_provider(settings: Settings | None = None) -> SpeechProvider:
 
 
 @lru_cache
-def get_nutrition_provider(settings: Settings | None = None) -> NutritionProvider:
+def get_recipe_generation_provider(settings: Settings | None = None) -> RecipeGenerationProvider:
     settings = settings or get_settings()
-    if settings.nutrition_provider == "openai":
-        from app.ai.providers.openai_nutrition import OpenAINutritionProvider
+    if settings.recipe_generation_provider == "openai":
+        from app.ai.providers.openai_recipe_generation import OpenAIRecipeGenerationProvider
 
-        return OpenAINutritionProvider(
-            api_key=settings.openai_api_key, model=settings.openai_nutrition_model
+        return OpenAIRecipeGenerationProvider(
+            api_key=settings.openai_api_key, model=settings.openai_recipe_generation_model
         )
-    raise ValueError(f"Unknown nutrition provider: {settings.nutrition_provider}")
+    raise ValueError(f"Unknown recipe generation provider: {settings.recipe_generation_provider}")

@@ -4,6 +4,7 @@ import { Button } from "../components/common/Button";
 import { EmptyState } from "../components/common/EmptyState";
 import { IngredientReviewList } from "../components/ingredients/IngredientReviewList";
 import { useIngredientDraftStore } from "../state/ingredientDraftStore";
+import { encodeIngredientQuery } from "../utils/ingredientQuery";
 
 export function IngredientReviewPage() {
   const ingredients = useIngredientDraftStore((s) => s.ingredients);
@@ -26,9 +27,10 @@ export function IngredientReviewPage() {
   }
 
   function handleFindRecipes() {
-    const params = new URLSearchParams();
-    for (const i of ingredients) params.append("ingredients", i.name);
-    navigate(`/results?${params.toString()}`);
+    const query = encodeIngredientQuery(
+      ingredients.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit })),
+    );
+    navigate(`/results?q=${query}`);
   }
 
   return (

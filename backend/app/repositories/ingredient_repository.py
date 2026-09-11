@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ingredient import Ingredient, IngredientAlias, IngredientSubstitution
+from app.models.ingredient import Ingredient, IngredientAlias
 
 
 class IngredientRepository:
@@ -38,14 +38,14 @@ class IngredientRepository:
         )
         return list(result.scalars().all())
 
-    async def list_substitutions_for(
-        self, ingredient_ids: list[int]
-    ) -> list[IngredientSubstitution]:
-        if not ingredient_ids:
-            return []
-        result = await self._session.execute(
-            select(IngredientSubstitution).where(
-                IngredientSubstitution.ingredient_id.in_(ingredient_ids)
-            )
-        )
-        return list(result.scalars().all())
+    async def get_or_create(self, name: str, *, category: str | None = None) -> Ingredient:
+        """Look up a canonical ingredient by exact name/alias, creating one if the
+        AI introduced a name that isn't in the dictionary yet."""
+        existing = await self.get_by_exact_name_or_alias(name)
+        if existing is not None:
+            return existing
+
+        ingredient = Ingredient(name=name.strip().lower(), category=category)
+        self._session.add(ingredient)
+        await self._session.flush()
+        return ingredient

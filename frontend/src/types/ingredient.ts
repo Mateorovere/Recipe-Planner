@@ -4,6 +4,8 @@ export interface DetectedIngredient {
   name: string;
   confidence: number | null;
   source: IngredientSource;
+  quantity: number | null;
+  unit: string | null;
 }
 
 export interface IngredientExtractionResponse {
@@ -16,7 +18,16 @@ export interface IngredientHistoryItem {
   raw_label: string;
   source: IngredientSource;
   confidence: number | null;
+  quantity: number | null;
+  unit: string | null;
   created_at: string;
+}
+
+/** One ingredient the user has, as sent into recipe generation. */
+export interface IngredientQuantity {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
 }
 
 /** A locally-edited ingredient in the review screen — always has a stable client id
@@ -26,4 +37,6 @@ export interface DraftIngredient {
   name: string;
   confidence: number | null;
   source: IngredientSource;
+  quantity: number | null;
+  unit: string | null;
 }

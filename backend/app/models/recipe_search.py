@@ -21,7 +21,8 @@ class RecipeSearch(Base):
     user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True
     )
-    query_ingredients: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    query_ingredients: Mapped[list[dict[str, object]]] = mapped_column(JSON, nullable=False)
+    """[{"name": ..., "quantity": ..., "unit": ...}, ...] as sent by the user."""
     results_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False

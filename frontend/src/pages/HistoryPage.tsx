@@ -6,6 +6,7 @@ import { ErrorState } from "../components/common/ErrorState";
 import { Spinner } from "../components/common/Spinner";
 import { getHistory } from "../api/users";
 import { useAuthStore } from "../state/authStore";
+import { encodeIngredientQuery } from "../utils/ingredientQuery";
 
 export function HistoryPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -48,10 +49,10 @@ export function HistoryPage() {
             {data.searches.map((s) => (
               <li key={s.id} className="rounded-xl border border-gray-100 p-3 text-sm">
                 <Link
-                  to={`/results?${s.query_ingredients.map((i) => `ingredients=${encodeURIComponent(i)}`).join("&")}`}
+                  to={`/results?q=${encodeIngredientQuery(s.query_ingredients)}`}
                   className="font-medium text-brand-700 hover:underline"
                 >
-                  {s.query_ingredients.join(", ")}
+                  {s.query_ingredients.map((i) => i.name).join(", ")}
                 </Link>
                 <p className="mt-1 text-xs text-gray-400">
                   {s.results_count} recipe{s.results_count === 1 ? "" : "s"} found ·{" "}
@@ -76,6 +77,12 @@ export function HistoryPage() {
                 title={`via ${i.source}${i.confidence !== null ? ` · ${Math.round(i.confidence * 100)}% confidence` : ""}`}
               >
                 {i.raw_label}
+                {i.quantity !== null && (
+                  <span className="text-gray-400">
+                    {" "}
+                    ({i.quantity} {i.unit ?? ""})
+                  </span>
+                )}
               </span>
             ))}
           </div>

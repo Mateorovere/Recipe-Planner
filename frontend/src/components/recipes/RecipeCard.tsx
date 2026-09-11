@@ -10,16 +10,12 @@ const DIFFICULTY_ICON: Record<string, string> = {
 
 interface RecipeCardProps {
   recipe: RecipeSummary;
-  ingredients: string[];
 }
 
-export function RecipeCard({ recipe, ingredients }: RecipeCardProps) {
-  const query = new URLSearchParams();
-  for (const i of ingredients) query.append("ingredients", i);
-
+export function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link
-      to={`/recipes/${recipe.id}?${query.toString()}`}
+      to={`/recipes/${recipe.id}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
       <div className="relative h-40 w-full bg-gradient-to-br from-brand-100 to-brand-200">

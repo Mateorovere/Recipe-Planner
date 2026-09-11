@@ -47,13 +47,12 @@ describe("text ingredient -> review -> results flow", () => {
 
     vi.mocked(extractFromText).mockResolvedValue({
       ingredients: [
-        { name: "chicken", confidence: 0.95, source: "text" },
-        { name: "rice", confidence: 0.9, source: "text" },
+        { name: "chicken", confidence: 0.95, source: "text", quantity: null, unit: null },
+        { name: "rice", confidence: 0.9, source: "text", quantity: null, unit: null },
       ],
       transcript: null,
     });
     vi.mocked(searchRecipes).mockResolvedValue({
-      ai_reranked: false,
       recipes: [
         {
           id: 1,
@@ -87,7 +86,13 @@ describe("text ingredient -> review -> results flow", () => {
     await user.click(screen.getByRole("button", { name: /find recipes/i }));
 
     await waitFor(() => expect(screen.getByText("Chicken Fried Rice")).toBeInTheDocument());
-    expect(searchRecipes).toHaveBeenCalledWith(["chicken", "rice"], undefined);
+    expect(searchRecipes).toHaveBeenCalledWith(
+      [
+        { name: "chicken", quantity: null, unit: null },
+        { name: "rice", quantity: null, unit: null },
+      ],
+      undefined,
+    );
   });
 
   it("shows an error state when ingredient extraction fails", async () => {

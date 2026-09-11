@@ -7,11 +7,12 @@ import { ErrorState } from "../components/common/ErrorState";
 import { RecipeGridSkeleton } from "../components/common/Skeleton";
 import { RecipeList } from "../components/recipes/RecipeList";
 import { useRecipeSearchResults } from "../hooks/useRecipeSearch";
+import { decodeIngredientQuery } from "../utils/ingredientQuery";
 
 export function RecipeResultsPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const ingredients = searchParams.getAll("ingredients");
+  const ingredients = decodeIngredientQuery(searchParams.get("q"));
 
   const { data, isLoading, isError, error, refetch } = useRecipeSearchResults(ingredients);
 
@@ -31,7 +32,10 @@ export function RecipeResultsPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-bold text-gray-900">Recipes for you</h1>
         <p className="text-sm text-gray-500">
-          Based on: <span className="font-medium text-gray-700">{ingredients.join(", ")}</span>
+          Based on:{" "}
+          <span className="font-medium text-gray-700">
+            {ingredients.map((i) => i.name).join(", ")}
+          </span>
         </p>
       </div>
 
@@ -53,9 +57,7 @@ export function RecipeResultsPage() {
           <ErrorState error={error} onRetry={() => void refetch()} />
         ))}
 
-      {data && data.recipes.length > 0 && (
-        <RecipeList recipes={data.recipes} ingredients={ingredients} />
-      )}
+      {data && data.recipes.length > 0 && <RecipeList recipes={data.recipes} />}
     </div>
   );
 }

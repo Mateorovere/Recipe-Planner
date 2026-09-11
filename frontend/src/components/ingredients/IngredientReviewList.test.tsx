@@ -29,7 +29,9 @@ describe("IngredientReviewList", () => {
 
   it("removes an ingredient when its chip's remove button is clicked", async () => {
     useIngredientDraftStore.setState({
-      ingredients: [{ id: "a", name: "onion", confidence: 0.8, source: "text" }],
+      ingredients: [
+        { id: "a", name: "onion", confidence: 0.8, source: "text", quantity: null, unit: null },
+      ],
       transcript: null,
     });
     render(<IngredientReviewList />);
@@ -42,7 +44,9 @@ describe("IngredientReviewList", () => {
 
   it("does not add duplicate ingredients", async () => {
     useIngredientDraftStore.setState({
-      ingredients: [{ id: "a", name: "onion", confidence: 0.8, source: "text" }],
+      ingredients: [
+        { id: "a", name: "onion", confidence: 0.8, source: "text", quantity: null, unit: null },
+      ],
       transcript: null,
     });
     render(<IngredientReviewList />);

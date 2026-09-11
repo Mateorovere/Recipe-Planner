@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -30,6 +30,10 @@ class Recipe(TimestampMixin, Base):
     servings: Mapped[int] = mapped_column(Integer, nullable=False)
     cuisine: Mapped[str | None] = mapped_column(String(80), nullable=True)
     source: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    """Provenance, e.g. 'ai_generated:gpt-4o-mini'."""
+    match_explanation: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    substitutions: Mapped[list[dict[str, str]] | None] = mapped_column(JSON, nullable=True)
+    """Free-text substitution suggestions: [{"ingredient", "substitute", "notes"}, ...]."""
 
     steps: Mapped[list[RecipeStep]] = relationship(
         back_populates="recipe", cascade="all, delete-orphan", order_by="RecipeStep.step_number"

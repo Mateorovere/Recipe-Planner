@@ -5,19 +5,21 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import Difficulty, IngredientImportance, NutritionSource
+from app.schemas.ingredient import IngredientQuantityInput
 
 
 class RecipeSearchFilters(BaseModel):
     max_total_time_minutes: int | None = Field(default=None, gt=0)
     difficulty: Difficulty | None = None
     dietary_tags: list[str] = Field(default_factory=list)
-    """e.g. ["vegetarian", "high-protein"] — matched against recipe_tags."""
+    """e.g. ["vegetarian", "high-protein"] — passed to the AI as generation constraints."""
 
 
 class RecipeSearchRequest(BaseModel):
-    ingredients: list[str] = Field(min_length=1, max_length=100)
+    ingredients: list[IngredientQuantityInput] = Field(min_length=1, max_length=100)
     filters: RecipeSearchFilters | None = None
-    limit: int = Field(default=10, ge=1, le=50)
+    count: int = Field(default=5, ge=1, le=10)
+    """How many distinct recipes to generate."""
 
 
 class RecipeIngredientSchema(BaseModel):
@@ -26,7 +28,7 @@ class RecipeIngredientSchema(BaseModel):
     unit: str | None
     importance: IngredientImportance
     have: bool
-    """Whether the user's provided ingredient list already covers this one."""
+    """Whether this ingredient came from the user's provided list at generation time."""
 
 
 class RecipeStepSchema(BaseModel):
@@ -82,9 +84,6 @@ class RecipeDetail(RecipeSummary):
 
 class RecipeSearchResponse(BaseModel):
     recipes: list[RecipeSummary]
-    ai_reranked: bool
-    """True when the LLM reranking step actually ran; false if it was skipped/failed
-    and the response reflects pure algorithmic ranking."""
 
 
 class SavedRecipeItem(BaseModel):
@@ -98,6 +97,6 @@ class SearchHistoryItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    query_ingredients: list[str]
+    query_ingredients: list[IngredientQuantityInput]
     results_count: int
     created_at: datetime
