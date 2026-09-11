@@ -44,24 +44,7 @@ generated) and clearly labeled as such in the UI, never presented as medically
 precise. Ingredient *detection* confidence is still surfaced to the user so
 low-confidence guesses can be corrected before they're used.
 
-## Architecture
 
-```
-┌─────────────┐      ┌──────────────────────────────────────────────┐      ┌────────────┐
-│   Frontend  │ HTTP │                    Backend                    │      │ PostgreSQL │
-│ React + TS  │─────▶│  API layer (FastAPI routers)                  │      │            │
-│  (Vite)     │      │      │                                        │      │            │
-└─────────────┘      │      ▼                                        │      │            │
-                      │  Service layer (business logic, generation)  │      │            │
-                      │      │                     │                 │      │            │
-                      │      ▼                     ▼                 │      │            │
-                      │  Repository layer     AI layer (interfaces)  │◀────▶│            │
-                      │  (SQLAlchemy)          │  │  │  │            │      │            │
-                      └──────┼─────────────────┼──┼──┼──┼────────────┘      └────────────┘
-                             ▼                 ▼  ▼  ▼  ▼
-                          Postgres        Vision LLM Speech RecipeGeneration
-                                         (OpenAI)(OpenAI)(local Whisper)  (OpenAI)
-```
 
 **Recipe generation pipeline** (`backend/app/services/recipe_service.py`):
 
