@@ -24,7 +24,7 @@ async def chat_json(
     model: str,
     system_prompt: str,
     user_content: str | list[dict[str, Any]],
-    max_tokens: int = 1000,
+    max_completion_tokens: int = 1000,
 ) -> dict[str, Any]:
     """Call the chat completions API in JSON mode and parse the result.
 
@@ -41,8 +41,7 @@ async def chat_json(
             model=model,
             messages=messages,
             response_format={"type": "json_object"},
-            max_tokens=max_tokens,
-            temperature=0.2,
+            max_completion_tokens=max_completion_tokens,
         )
     except openai.RateLimitError as exc:
         raise AIRateLimitError("The AI provider is rate-limiting requests.") from exc

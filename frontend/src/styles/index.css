@@ -9,5 +9,59 @@ body,
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-cream-100 text-cream-900 antialiased;
+}
+
+::selection {
+  @apply bg-brand-200 text-brand-900;
+}
+
+/* App-wide keyboard focus ring — inputs already have their own via Tailwind
+   classes; this covers everything else (links, custom buttons, chips). */
+:focus-visible {
+  outline: 2px solid theme("colors.brand.500");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin, warm-toned scrollbar (progressive enhancement, WebKit/Blink only). */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-cream-300;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-cream-400;
+}
+
+/* Horizontal snap-scroll rows (carousels) hide their scrollbar but stay
+   keyboard/touch scrollable. */
+.scroll-row {
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scroll-row::-webkit-scrollbar {
+  display: none;
+}
+.scroll-row > * {
+  scroll-snap-align: start;
+}
+
+/* Respect motion preferences: shrink every custom animation/transition to
+   near-instant instead of disabling interactivity outright. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

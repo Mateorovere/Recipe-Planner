@@ -64,6 +64,15 @@ class GeneratedSubstitution:
 
 
 @dataclass(frozen=True, slots=True)
+class ImageResult:
+    """A single photo matched to a recipe, plus what's needed to credit it."""
+
+    url: str
+    photographer_name: str
+    photographer_url: str
+
+
+@dataclass(frozen=True, slots=True)
 class GeneratedRecipe:
     title: str
     description: str

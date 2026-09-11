@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from app.ai.types import (
     GeneratedRecipe,
     GenerationFilters,
+    ImageResult,
     IngredientQuantity,
     RawDetectedIngredient,
 )
@@ -57,3 +58,15 @@ class RecipeGenerationProvider(ABC):
         filters: GenerationFilters | None,
         count: int,
     ) -> list[GeneratedRecipe]: ...
+
+
+class ImageProvider(ABC):
+    """Recipe title -> a relevant food photo, or `None` when nothing suitable
+    was found. Image search is a nice-to-have: implementations must never
+    raise for an ordinary "no results" or transport failure — a `None`
+    result is how that's communicated, so a recipe search never fails (and
+    never even slows down further) because of a photo lookup.
+    """
+
+    @abstractmethod
+    async def find_image(self, query: str) -> ImageResult | None: ...

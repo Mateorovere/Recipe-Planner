@@ -79,6 +79,12 @@ class Settings(BaseSettings):
     # --- Recipe generation ---
     recipes_per_search: int = Field(default=5, validation_alias="RECIPES_PER_SEARCH")
 
+    # --- Unsplash (recipe photos) ---
+    # Optional and intentionally not required at startup like the OpenAI key
+    # above: recipe generation is the core feature and must keep working even
+    # if this is unset — recipes just come back without a photo.
+    unsplash_access_key: str = Field(default="", validation_alias="UNSPLASH_ACCESS_KEY")
+
     @model_validator(mode="after")
     def _validate_required_secrets(self) -> Settings:
         # Keep tests/imports (e.g. `alembic` autogenerate, docs tooling) from

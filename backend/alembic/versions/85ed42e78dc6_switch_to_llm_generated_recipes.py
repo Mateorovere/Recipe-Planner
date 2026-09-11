@@ -24,8 +24,16 @@ def upgrade() -> None:
     op.drop_index(op.f('ix_ingredient_substitutions_ingredient_id'), table_name='ingredient_substitutions')
     op.drop_index(op.f('ix_ingredient_substitutions_substitute_ingredient_id'), table_name='ingredient_substitutions')
     op.drop_table('ingredient_substitutions')
-    op.add_column('recipe_ingredients', sa.Column('user_has', sa.Boolean(), nullable=False))
-    op.add_column('recipes', sa.Column('match_explanation', sa.Text(), nullable=False))
+    op.add_column(
+        'recipe_ingredients',
+        sa.Column('user_has', sa.Boolean(), nullable=False, server_default=sa.false()),
+    )
+    op.alter_column('recipe_ingredients', 'user_has', server_default=None)
+    op.add_column(
+        'recipes',
+        sa.Column('match_explanation', sa.Text(), nullable=False, server_default=''),
+    )
+    op.alter_column('recipes', 'match_explanation', server_default=None)
     op.add_column('recipes', sa.Column('substitutions', sa.JSON(), nullable=True))
     op.add_column('user_ingredients', sa.Column('quantity', sa.Float(), nullable=True))
     op.add_column('user_ingredients', sa.Column('unit', sa.String(length=30), nullable=True))

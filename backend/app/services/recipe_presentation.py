@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from app.models.nutrition import NutritionInformation
 from app.models.recipe import Recipe
-from app.schemas.recipe import NutritionSchema, RecipeSummary
+from app.schemas.recipe import ImageAttributionSchema, NutritionSchema, RecipeSummary
 
 
 def recipe_to_summary(recipe: Recipe) -> RecipeSummary:
@@ -23,6 +23,9 @@ def recipe_to_summary(recipe: Recipe) -> RecipeSummary:
         title=recipe.title,
         slug=recipe.slug,
         image_url=recipe.image_url,
+        image_attribution=(
+            ImageAttributionSchema(**recipe.image_attribution) if recipe.image_attribution else None
+        ),
         description=recipe.description,
         prep_time_minutes=recipe.prep_time_minutes,
         cook_time_minutes=recipe.cook_time_minutes,
@@ -33,6 +36,7 @@ def recipe_to_summary(recipe: Recipe) -> RecipeSummary:
         matched_ingredient_count=matched,
         total_ingredient_count=total,
         missing_ingredients=missing,
+        tags=[t.tag for t in recipe.tags],
     )
 
 

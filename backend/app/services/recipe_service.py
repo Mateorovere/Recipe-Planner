@@ -11,13 +11,14 @@ provider failure surfaces as a clean error instead of silently degrading.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.base import RecipeGenerationProvider
-from app.ai.types import GeneratedRecipe, GenerationFilters, IngredientQuantity
+from app.ai.base import ImageProvider, RecipeGenerationProvider
+from app.ai.types import GeneratedRecipe, GenerationFilters, ImageResult, IngredientQuantity
 from app.core.exceptions import NoMatchingRecipesError, NotFoundError
 from app.models.enums import Difficulty, IngredientImportance, NutritionSource
 from app.models.nutrition import NutritionInformation
@@ -57,11 +58,13 @@ class RecipeService:
         session: AsyncSession,
         *,
         generation_provider: RecipeGenerationProvider,
+        image_provider: ImageProvider,
         generation_model_name: str,
         default_count: int,
     ) -> None:
         self._session = session
         self._generator = generation_provider
+        self._images = image_provider
         self._model_name = generation_model_name
         self._default_count = default_count
         self._recipes = RecipeRepository(session)
@@ -116,7 +119,13 @@ class RecipeService:
                 "adding a few more, or broadening your list."
             )
 
-        recipes = [await self._persist(g) for g in generated]
+        # Fetched concurrently (and independently of persistence, which stays
+        # sequential for slug-uniqueness) so N photo lookups cost as much as
+        # the slowest one, not their sum.
+        images = await asyncio.gather(*[self._find_image(g) for g in generated])
+        recipes = [
+            await self._persist(g, image) for g, image in zip(generated, images, strict=True)
+        ]
 
         await self._searches.record(
             user_id=user_id,
@@ -164,9 +173,22 @@ class RecipeService:
             is_favorited=is_favorited,
         )
 
+    # ------------------------------------------------------------------ images
+
+    async def _find_image(self, generated: GeneratedRecipe) -> ImageResult | None:
+        """Never lets an image-lookup failure take down recipe generation —
+        the `ImageProvider` contract already promises this, but a search
+        result is worth persisting either way, so guard against a
+        misbehaving future implementation too."""
+        try:
+            return await self._images.find_image(f"{generated.title} food")
+        except Exception:  # noqa: BLE001 - a photo is never worth failing search over
+            logger.warning("Image lookup raised for %r", generated.title, exc_info=True)
+            return None
+
     # ------------------------------------------------------------------ persistence
 
-    async def _persist(self, generated: GeneratedRecipe) -> Recipe:
+    async def _persist(self, generated: GeneratedRecipe, image: ImageResult | None) -> Recipe:
         difficulty_value = (
             generated.difficulty if generated.difficulty in _VALID_DIFFICULTIES else "medium"
         )
@@ -174,7 +196,15 @@ class RecipeService:
             title=generated.title or "Untitled recipe",
             slug=await self._unique_slug(generated.title or "recipe"),
             description=generated.description,
-            image_url=None,
+            image_url=image.url if image else None,
+            image_attribution=(
+                {
+                    "photographer_name": image.photographer_name,
+                    "photographer_url": image.photographer_url,
+                }
+                if image
+                else None
+            ),
             prep_time_minutes=max(0, generated.prep_time_minutes),
             cook_time_minutes=max(0, generated.cook_time_minutes),
             difficulty=Difficulty(difficulty_value),

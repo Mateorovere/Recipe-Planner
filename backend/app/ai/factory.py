@@ -9,7 +9,13 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from app.ai.base import LLMProvider, RecipeGenerationProvider, SpeechProvider, VisionProvider
+from app.ai.base import (
+    ImageProvider,
+    LLMProvider,
+    RecipeGenerationProvider,
+    SpeechProvider,
+    VisionProvider,
+)
 from app.core.config import Settings, get_settings
 
 
@@ -63,3 +69,16 @@ def get_recipe_generation_provider(settings: Settings | None = None) -> RecipeGe
             api_key=settings.openai_api_key, model=settings.openai_recipe_generation_model
         )
     raise ValueError(f"Unknown recipe generation provider: {settings.recipe_generation_provider}")
+
+
+@lru_cache
+def get_image_provider(settings: Settings | None = None) -> ImageProvider:
+    """Unsplash is the only implementation today (see `UnsplashImageProvider`
+    for why this doesn't need its own env-driven branch the way the other
+    providers do), but it still lives behind the `ImageProvider` ABC/factory
+    like everything else so it's just as swappable and just as easy to fake
+    in tests."""
+    settings = settings or get_settings()
+    from app.ai.providers.unsplash_image import UnsplashImageProvider
+
+    return UnsplashImageProvider(access_key=settings.unsplash_access_key)

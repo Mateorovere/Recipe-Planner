@@ -11,11 +11,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300",
+  primary:
+    "bg-brand-600 text-white shadow-soft hover:bg-brand-700 hover:shadow-lifted active:bg-brand-800 disabled:bg-brand-300 disabled:shadow-none",
   secondary:
-    "bg-white text-brand-700 border border-brand-200 hover:bg-brand-50 disabled:text-gray-400",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 disabled:text-gray-300",
-  danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
+    "bg-white text-brand-700 border border-brand-200 hover:border-brand-300 hover:bg-brand-50 disabled:text-cream-400",
+  ghost: "bg-transparent text-cream-700 hover:bg-cream-100 disabled:text-cream-300",
+  danger: "bg-red-600 text-white shadow-soft hover:bg-red-700 disabled:bg-red-300",
 };
 
 const SIZE_CLASSES: Record<Size, string> = {
@@ -34,7 +35,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:active:scale-100 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
       disabled={disabled ?? isLoading}
       {...rest}
     >

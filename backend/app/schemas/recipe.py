@@ -51,6 +51,14 @@ class SubstitutionSchema(BaseModel):
     notes: str | None = None
 
 
+class ImageAttributionSchema(BaseModel):
+    """Required whenever `image_url` came from Unsplash — see
+    `app.ai.providers.unsplash_image` for why."""
+
+    photographer_name: str
+    photographer_url: str
+
+
 class RecipeSummary(BaseModel):
     """What a recipe results card needs."""
 
@@ -58,6 +66,7 @@ class RecipeSummary(BaseModel):
     title: str
     slug: str
     image_url: str | None
+    image_attribution: ImageAttributionSchema | None = None
     description: str
     prep_time_minutes: int
     cook_time_minutes: int
@@ -68,6 +77,8 @@ class RecipeSummary(BaseModel):
     matched_ingredient_count: int
     total_ingredient_count: int
     missing_ingredients: list[str]
+    tags: list[str] = Field(default_factory=list)
+    """Meal/dietary/speed tags (e.g. "vegetarian", "quick", "high-protein")."""
 
 
 class RecipeDetail(RecipeSummary):

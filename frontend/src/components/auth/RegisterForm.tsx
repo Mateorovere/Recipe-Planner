@@ -2,7 +2,11 @@ import { useState } from "react";
 
 import { Button } from "../common/Button";
 import { ErrorState } from "../common/ErrorState";
+import { toast } from "../common/toastClient";
 import { useLogin, useRegister } from "../../hooks/useAuth";
+
+const FIELD_CLASSES =
+  "rounded-xl border border-cream-200 bg-white px-4 py-2.5 text-sm text-cream-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200";
 
 export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");
@@ -21,12 +25,23 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         e.preventDefault();
         register.mutate(
           { email, password, ...(fullName.trim() ? { full_name: fullName.trim() } : {}) },
-          { onSuccess: () => login.mutate({ email, password }, { onSuccess }) },
+          {
+            onSuccess: () =>
+              login.mutate(
+                { email, password },
+                {
+                  onSuccess: () => {
+                    toast.success("Account created — welcome!");
+                    onSuccess();
+                  },
+                },
+              ),
+          },
         );
       }}
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="register-name" className="text-sm font-medium text-gray-700">
+        <label htmlFor="register-name" className="text-sm font-medium text-cream-700">
           Full name (optional)
         </label>
         <input
@@ -34,11 +49,11 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className={FIELD_CLASSES}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="register-email" className="text-sm font-medium text-gray-700">
+        <label htmlFor="register-email" className="text-sm font-medium text-cream-700">
           Email
         </label>
         <input
@@ -47,11 +62,11 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className={FIELD_CLASSES}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="register-password" className="text-sm font-medium text-gray-700">
+        <label htmlFor="register-password" className="text-sm font-medium text-cream-700">
           Password
         </label>
         <input
@@ -61,9 +76,9 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className={FIELD_CLASSES}
         />
-        <p className="text-xs text-gray-400">At least 8 characters.</p>
+        <p className="text-xs text-cream-400">At least 8 characters.</p>
       </div>
       {error && <ErrorState error={error} title="Couldn't create your account" />}
       <Button type="submit" size="lg" isLoading={isPending}>

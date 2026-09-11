@@ -22,6 +22,7 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app.api.deps import (  # noqa: E402
     get_db,
+    get_image_provider_dep,
     get_llm_provider_dep,
     get_recipe_generation_provider_dep,
     get_speech_provider_dep,
@@ -31,6 +32,7 @@ from app.db.base import Base  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import *  # noqa: E402,F401,F403 - registers all tables on Base.metadata
 from tests.fakes import (  # noqa: E402
+    FakeImageProvider,
     FakeLLMProvider,
     FakeRecipeGenerationProvider,
     FakeSpeechProvider,
@@ -78,6 +80,11 @@ def fake_recipe_generation() -> FakeRecipeGenerationProvider:
     return FakeRecipeGenerationProvider()
 
 
+@pytest.fixture
+def fake_image() -> FakeImageProvider:
+    return FakeImageProvider()
+
+
 @pytest_asyncio.fixture
 async def client(
     engine: AsyncEngine,
@@ -85,6 +92,7 @@ async def client(
     fake_speech: FakeSpeechProvider,
     fake_llm: FakeLLMProvider,
     fake_recipe_generation: FakeRecipeGenerationProvider,
+    fake_image: FakeImageProvider,
 ) -> AsyncGenerator[AsyncClient]:
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -97,6 +105,7 @@ async def client(
     app.dependency_overrides[get_speech_provider_dep] = lambda: fake_speech
     app.dependency_overrides[get_llm_provider_dep] = lambda: fake_llm
     app.dependency_overrides[get_recipe_generation_provider_dep] = lambda: fake_recipe_generation
+    app.dependency_overrides[get_image_provider_dep] = lambda: fake_image
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:

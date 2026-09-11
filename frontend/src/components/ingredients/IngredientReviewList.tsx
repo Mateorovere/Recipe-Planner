@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { Plus } from "lucide-react";
 
 import { IngredientChip } from "./IngredientChip";
 import { Button } from "../common/Button";
@@ -36,15 +38,17 @@ export function IngredientReviewList() {
         />
       ) : (
         <div className="flex flex-col gap-2" role="list" aria-label="Your ingredients">
-          {ingredients.map((ingredient) => (
-            <div role="listitem" key={ingredient.id}>
-              <IngredientChip
-                ingredient={ingredient}
-                onRemove={removeIngredient}
-                onQuantityChange={updateQuantity}
-              />
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {ingredients.map((ingredient) => (
+              <div role="listitem" key={ingredient.id}>
+                <IngredientChip
+                  ingredient={ingredient}
+                  onRemove={removeIngredient}
+                  onQuantityChange={updateQuantity}
+                />
+              </div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
@@ -61,7 +65,7 @@ export function IngredientReviewList() {
           onChange={(e) => setNewIngredient(e.target.value)}
           placeholder="Add an ingredient"
           aria-label="Add an ingredient"
-          className="min-w-0 flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className="min-w-0 flex-1 rounded-xl border border-cream-200 bg-white px-4 py-2.5 text-sm text-cream-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
         <input
           type="number"
@@ -72,7 +76,7 @@ export function IngredientReviewList() {
           onChange={(e) => setNewQuantity(e.target.value)}
           placeholder="qty"
           aria-label="New ingredient quantity"
-          className="w-16 rounded-xl border border-gray-200 px-2 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className="w-16 rounded-xl border border-cream-200 bg-white px-2 py-2.5 text-sm text-cream-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
         <input
           type="text"
@@ -80,10 +84,11 @@ export function IngredientReviewList() {
           onChange={(e) => setNewUnit(e.target.value)}
           placeholder="unit"
           aria-label="New ingredient unit"
-          className="w-20 rounded-xl border border-gray-200 px-2 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className="w-20 rounded-xl border border-cream-200 bg-white px-2 py-2.5 text-sm text-cream-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
         <Button type="submit" variant="secondary" disabled={!newIngredient.trim()}>
-          + Add
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Add
         </Button>
       </form>
     </div>

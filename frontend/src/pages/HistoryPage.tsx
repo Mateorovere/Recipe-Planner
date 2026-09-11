@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { EmptyState } from "../components/common/EmptyState";
@@ -25,7 +26,7 @@ export function HistoryPage() {
         action={
           <Link
             to="/login"
-            className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+            className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-brand-700"
           >
             Log in
           </Link>
@@ -41,20 +42,31 @@ export function HistoryPage() {
   return (
     <div className="flex flex-col gap-8">
       <section>
-        <h1 className="mb-3 text-xl font-bold text-gray-900">Search history</h1>
+        <h1 className="mb-3 font-display text-2xl font-semibold text-cream-900">
+          Search history
+        </h1>
         {data.searches.length === 0 ? (
           <EmptyState icon="🔍" title="No searches yet" />
         ) : (
           <ul className="flex flex-col gap-2">
             {data.searches.map((s) => (
-              <li key={s.id} className="rounded-xl border border-gray-100 p-3 text-sm">
+              <li
+                key={s.id}
+                className="rounded-2xl border border-cream-200 bg-white p-4 text-sm shadow-soft transition-colors hover:border-brand-200"
+              >
                 <Link
                   to={`/results?q=${encodeIngredientQuery(s.query_ingredients)}`}
-                  className="font-medium text-brand-700 hover:underline"
+                  className="flex items-center gap-3 font-medium text-brand-700 hover:underline"
                 >
+                  <span
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-50 text-brand-600"
+                    aria-hidden="true"
+                  >
+                    <Search className="h-4 w-4" />
+                  </span>
                   {s.query_ingredients.map((i) => i.name).join(", ")}
                 </Link>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 pl-12 text-xs text-cream-400">
                   {s.results_count} recipe{s.results_count === 1 ? "" : "s"} found ·{" "}
                   {new Date(s.created_at).toLocaleString()}
                 </p>
@@ -65,7 +77,7 @@ export function HistoryPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-xl font-bold text-gray-900">Ingredient history</h2>
+        <h2 className="mb-3 text-xl font-semibold text-cream-900">Ingredient history</h2>
         {data.ingredients.length === 0 ? (
           <EmptyState icon="🥕" title="No ingredients analyzed yet" />
         ) : (
@@ -73,12 +85,12 @@ export function HistoryPage() {
             {data.ingredients.map((i) => (
               <span
                 key={i.id}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm capitalize text-gray-700"
+                className="rounded-full border border-cream-200 bg-white px-3 py-1.5 text-sm capitalize text-cream-700 shadow-soft"
                 title={`via ${i.source}${i.confidence !== null ? ` · ${Math.round(i.confidence * 100)}% confidence` : ""}`}
               >
                 {i.raw_label}
                 {i.quantity !== null && (
-                  <span className="text-gray-400">
+                  <span className="text-cream-400">
                     {" "}
                     ({i.quantity} {i.unit ?? ""})
                   </span>

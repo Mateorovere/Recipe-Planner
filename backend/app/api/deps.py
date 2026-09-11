@@ -12,8 +12,15 @@ from collections.abc import AsyncGenerator
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.base import LLMProvider, RecipeGenerationProvider, SpeechProvider, VisionProvider
+from app.ai.base import (
+    ImageProvider,
+    LLMProvider,
+    RecipeGenerationProvider,
+    SpeechProvider,
+    VisionProvider,
+)
 from app.ai.factory import (
+    get_image_provider,
     get_llm_provider,
     get_recipe_generation_provider,
     get_speech_provider,
@@ -56,6 +63,10 @@ def get_recipe_generation_provider_dep() -> RecipeGenerationProvider:
     return get_recipe_generation_provider()
 
 
+def get_image_provider_dep() -> ImageProvider:
+    return get_image_provider()
+
+
 async def get_current_user_optional(
     authorization: str | None = Header(default=None),
     session: AsyncSession = Depends(get_db),
@@ -95,11 +106,13 @@ def get_ingredient_service(
 def get_recipe_service(
     session: AsyncSession = Depends(get_db),
     generation: RecipeGenerationProvider = Depends(get_recipe_generation_provider_dep),
+    image_provider: ImageProvider = Depends(get_image_provider_dep),
     settings: Settings = Depends(get_settings_dep),
 ) -> RecipeService:
     return RecipeService(
         session,
         generation_provider=generation,
+        image_provider=image_provider,
         generation_model_name=settings.openai_recipe_generation_model,
         default_count=settings.recipes_per_search,
     )

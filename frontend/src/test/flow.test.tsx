@@ -59,6 +59,7 @@ describe("text ingredient -> review -> results flow", () => {
           title: "Chicken Fried Rice",
           slug: "chicken-fried-rice",
           image_url: null,
+          image_attribution: null,
           description: "Classic weeknight fried rice.",
           prep_time_minutes: 10,
           cook_time_minutes: 15,
@@ -69,6 +70,7 @@ describe("text ingredient -> review -> results flow", () => {
           matched_ingredient_count: 2,
           total_ingredient_count: 2,
           missing_ingredients: [],
+          tags: [],
         },
       ],
     });

@@ -107,7 +107,7 @@ class OpenAIRecipeGenerationProvider(RecipeGenerationProvider):
             # literal braces that .format would misinterpret as placeholders.
             system_prompt=_SYSTEM_PROMPT.replace("{count}", str(count)),
             user_content=json.dumps(payload),
-            max_tokens=4000,
+            max_completion_tokens=4000,
         )
         raw_recipes = result.get("recipes", [])
         if not isinstance(raw_recipes, list):

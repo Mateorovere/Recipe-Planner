@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
+import { Mic, Square } from "lucide-react";
 
+import { AIThinkingIndicator } from "../common/AIThinkingIndicator";
 import { Button } from "../common/Button";
 
 interface AudioRecorderProps {
@@ -9,11 +11,14 @@ interface AudioRecorderProps {
 
 type RecordingState = "idle" | "recording" | "recorded" | "unsupported";
 
+const WAVE_BAR_COUNT = 5;
+
 export function AudioRecorder({ onSubmit, isSubmitting }: AudioRecorderProps) {
   const [state, setState] = useState<RecordingState>(
     typeof MediaRecorder === "undefined" ? "unsupported" : "idle",
   );
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -31,6 +36,7 @@ export function AudioRecorder({ onSubmit, isSubmitting }: AudioRecorderProps) {
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
         setState("recorded");
         for (const track of stream.getTracks()) track.stop();
       };
@@ -51,38 +57,70 @@ export function AudioRecorder({ onSubmit, isSubmitting }: AudioRecorderProps) {
   return (
     <div className="flex flex-col items-center gap-4">
       {state === "unsupported" ? (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-cream-500">
           Recording isn't supported in this browser. Upload an audio file instead.
         </p>
       ) : (
         <>
-          <button
-            type="button"
-            onClick={state === "recording" ? stopRecording : startRecording}
-            disabled={isSubmitting}
-            aria-pressed={state === "recording"}
-            className={`flex h-24 w-24 items-center justify-center rounded-full text-4xl text-white shadow-lg transition-transform active:scale-95 ${
-              state === "recording" ? "animate-pulse bg-red-500" : "bg-brand-600"
-            }`}
-          >
-            <span aria-hidden="true">{state === "recording" ? "⏹" : "🎙️"}</span>
-          </button>
-          <p className="text-sm text-gray-500">
+          <div className="relative flex h-28 w-28 items-center justify-center">
+            {state === "recording" && (
+              <span
+                className="absolute inset-0 rounded-full animate-pulse-ring"
+                aria-hidden="true"
+              />
+            )}
+            <button
+              type="button"
+              onClick={state === "recording" ? stopRecording : startRecording}
+              disabled={isSubmitting}
+              aria-pressed={state === "recording"}
+              className={`relative flex h-24 w-24 items-center justify-center rounded-full text-white shadow-lifted transition-transform duration-150 active:scale-95 disabled:opacity-60 ${
+                state === "recording" ? "bg-red-500" : "bg-brand-600 hover:bg-brand-700"
+              }`}
+            >
+              {state === "recording" ? (
+                <Square className="h-8 w-8" aria-hidden="true" fill="currentColor" />
+              ) : (
+                <Mic className="h-9 w-9" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+
+          {state === "recording" && (
+            <div className="flex h-8 items-end gap-1" aria-hidden="true">
+              {Array.from({ length: WAVE_BAR_COUNT }, (_, i) => (
+                <span
+                  key={i}
+                  className="w-1.5 animate-pulse rounded-full bg-red-400"
+                  style={{
+                    height: `${12 + ((i * 7) % 20)}px`,
+                    animationDelay: `${i * 120}ms`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <p className="text-sm text-cream-500">
             {state === "recording"
               ? "Recording… tap to stop"
               : state === "recorded"
                 ? "Got it! Tap the mic to re-record."
                 : "Tap the mic and describe what you have"}
           </p>
+
+          {state === "recorded" && audioUrl && (
+            <audio controls src={audioUrl} className="h-10 w-full max-w-xs" />
+          )}
         </>
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="flex w-full items-center gap-2 text-xs text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" />
+      <div className="flex w-full items-center gap-2 text-xs text-cream-400">
+        <div className="h-px flex-1 bg-cream-200" />
         or
-        <div className="h-px flex-1 bg-gray-200" />
+        <div className="h-px flex-1 bg-cream-200" />
       </div>
 
       <Button
@@ -102,10 +140,13 @@ export function AudioRecorder({ onSubmit, isSubmitting }: AudioRecorderProps) {
           const selected = e.target.files?.[0];
           if (selected) {
             setAudioBlob(selected);
+            setAudioUrl(URL.createObjectURL(selected));
             setState("recorded");
           }
         }}
       />
+
+      {isSubmitting && <AIThinkingIndicator stages={["Uploading…", "Transcribing what you said…", "Finding ingredients…"]} className="w-full" />}
 
       <Button
         size="lg"

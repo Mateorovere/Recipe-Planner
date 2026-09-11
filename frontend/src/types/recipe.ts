@@ -2,11 +2,17 @@ export type Difficulty = "easy" | "medium" | "hard";
 export type IngredientImportance = "critical" | "normal" | "optional";
 export type NutritionSource = "calculated" | "estimated" | "database" | "ai_generated";
 
+export interface ImageAttribution {
+  photographer_name: string;
+  photographer_url: string;
+}
+
 export interface RecipeSummary {
   id: number;
   title: string;
   slug: string;
   image_url: string | null;
+  image_attribution: ImageAttribution | null;
   description: string;
   prep_time_minutes: number;
   cook_time_minutes: number;
@@ -17,6 +23,7 @@ export interface RecipeSummary {
   matched_ingredient_count: number;
   total_ingredient_count: number;
   missing_ingredients: string[];
+  tags: string[];
 }
 
 export interface RecipeSearchResponse {

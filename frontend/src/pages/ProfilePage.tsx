@@ -1,3 +1,4 @@
+import { UserRound } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
 import { Button } from "../components/common/Button";
@@ -19,13 +20,18 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-3xl">
-        👤
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-cream-200 bg-white p-8 text-center shadow-soft">
+      <div
+        className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft"
+        aria-hidden="true"
+      >
+        <UserRound className="h-9 w-9" />
       </div>
-      <h1 className="text-xl font-bold text-gray-900">{user.full_name ?? "Your profile"}</h1>
-      <p className="text-gray-500">{user.email}</p>
-      <p className="text-xs text-gray-400">
+      <h1 className="font-display text-xl font-semibold text-cream-900">
+        {user.full_name ?? "Your profile"}
+      </h1>
+      <p className="text-cream-600">{user.email}</p>
+      <p className="text-xs text-cream-400">
         Member since {new Date(user.created_at).toLocaleDateString()}
       </p>
       <Button variant="secondary" onClick={logout}>

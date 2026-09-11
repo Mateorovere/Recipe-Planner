@@ -1,19 +1,21 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { ChefHat, Check, Clock, Flame, Heart, Share2, Users } from "lucide-react";
 import { useParams } from "react-router-dom";
 
+import { Badge } from "../components/common/Badge";
 import { Button } from "../components/common/Button";
 import { ErrorState } from "../components/common/ErrorState";
-import { Skeleton } from "../components/common/Skeleton";
+import { IconButton } from "../components/common/IconButton";
+import { RecipeDetailSkeleton } from "../components/common/Skeleton";
+import { toast } from "../components/common/toastClient";
+import { CookingMode } from "../components/recipes/CookingMode";
+import { NutritionBars } from "../components/recipes/NutritionBars";
 import { useFavorites, useToggleFavorite } from "../hooks/useFavorites";
 import { useRecipeDetail } from "../hooks/useRecipeSearch";
 import { useAuthStore } from "../state/authStore";
+import { useRecentlyViewedStore } from "../state/recentlyViewedStore";
 import { DIFFICULTY_ICON } from "../utils/recipeDisplay";
-
-const NUTRITION_SOURCE_LABEL: Record<string, string> = {
-  calculated: "Calculated from ingredients",
-  estimated: "Estimated",
-  database: "From our recipe database",
-  ai_generated: "AI-estimated — not medically precise",
-};
 
 export function RecipeDetailPage() {
   const params = useParams<{ recipeId: string }>();
@@ -23,16 +25,26 @@ export function RecipeDetailPage() {
   const { data: recipe, isLoading, isError, error, refetch } = useRecipeDetail(recipeId);
   useFavorites(); // warms the favorites cache so the toggle below feels instant
   const { add, remove } = useToggleFavorite(recipeId ?? -1);
+  const recordRecentlyViewed = useRecentlyViewedStore((s) => s.record);
+
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [cookingMode, setCookingMode] = useState(false);
+
+  useEffect(() => {
+    if (recipe) {
+      recordRecentlyViewed({
+        id: recipe.id,
+        title: recipe.title,
+        image_url: recipe.image_url,
+        total_time_minutes: recipe.total_time_minutes,
+        difficulty: recipe.difficulty,
+      });
+    }
+  }, [recipe, recordRecentlyViewed]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-56 w-full" />
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    );
+    return <RecipeDetailSkeleton />;
   }
 
   if (isError || !recipe) {
@@ -41,9 +53,46 @@ export function RecipeDetailPage() {
 
   const isFavoriting = add.isPending || remove.isPending;
 
+  function toggleIngredient(name: string) {
+    setCheckedIngredients((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function toggleStep(stepNumber: number) {
+    setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(stepNumber)) next.delete(stepNumber);
+      else next.add(stepNumber);
+      return next;
+    });
+  }
+
+  async function handleShare() {
+    if (!recipe) return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: recipe.title, url });
+      } catch {
+        // user cancelled the native share sheet — nothing to do
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard.");
+    } catch {
+      toast.error("Couldn't copy the link.");
+    }
+  }
+
   return (
     <article className="flex flex-col gap-6 pb-10">
-      <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 to-brand-200 sm:h-72">
+      <div className="relative h-64 w-full overflow-hidden rounded-3xl bg-gradient-to-br from-brand-100 to-brand-200 sm:h-80">
         {recipe.image_url ? (
           <img src={recipe.image_url} alt={recipe.title} className="h-full w-full object-cover" />
         ) : (
@@ -51,31 +100,95 @@ export function RecipeDetailPage() {
             🍽️
           </div>
         )}
-      </div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
-          <p className="mt-1 text-gray-600">{recipe.description}</p>
+        <div className="absolute right-4 top-4 flex gap-2">
+          <IconButton aria-label="Share this recipe" onClick={() => void handleShare()}>
+            <Share2 className="h-4 w-4 text-cream-700" aria-hidden="true" />
+          </IconButton>
+          {isAuthenticated && (
+            <IconButton
+              aria-label={recipe.is_favorited ? "Remove from favorites" : "Save recipe"}
+              onClick={() =>
+                recipe.is_favorited
+                  ? remove.mutate(undefined, { onError: () => toast.error("Couldn't remove that favorite.") })
+                  : add.mutate(undefined, { onSuccess: () => toast.success("Saved to favorites.") })
+              }
+              disabled={isFavoriting}
+            >
+              <motion.span
+                key={recipe.is_favorited ? "on" : "off"}
+                initial={{ scale: 0.6 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              >
+                <Heart
+                  className={`h-4 w-4 ${recipe.is_favorited ? "text-brand-600" : "text-cream-700"}`}
+                  fill={recipe.is_favorited ? "currentColor" : "none"}
+                  aria-hidden="true"
+                />
+              </motion.span>
+            </IconButton>
+          )}
         </div>
-        {isAuthenticated && (
-          <Button
-            variant={recipe.is_favorited ? "danger" : "secondary"}
-            isLoading={isFavoriting}
-            onClick={() => (recipe.is_favorited ? remove.mutate() : add.mutate())}
-          >
-            {recipe.is_favorited ? "♥ Saved" : "♡ Save"}
-          </Button>
-        )}
+
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 sm:p-6">
+          <div className="flex flex-wrap gap-1.5">
+            {recipe.cuisine && (
+              <Badge variant="neutral" className="!bg-white/90">
+                {recipe.cuisine}
+              </Badge>
+            )}
+            {recipe.tags.slice(0, 4).map((tag) => (
+              <Badge key={tag} variant="neutral" className="!bg-white/90">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <h1 className="font-display text-2xl font-semibold text-white sm:text-3xl">
+            {recipe.title}
+          </h1>
+          {recipe.image_attribution && (
+            <p className="text-xs text-white/70">
+              Photo by{" "}
+              <a
+                href={recipe.image_attribution.photographer_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white"
+              >
+                {recipe.image_attribution.photographer_name}
+              </a>{" "}
+              on{" "}
+              <a
+                href="https://unsplash.com/?utm_source=ai-recipe-planner&utm_medium=referral"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white"
+              >
+                Unsplash
+              </a>
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
-        <span>⏱ {recipe.total_time_minutes} min total</span>
-        <span>
+      <p className="text-cream-600">{recipe.description}</p>
+
+      <div className="flex flex-wrap gap-4 rounded-2xl bg-white p-4 text-sm text-cream-700 shadow-soft">
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="h-4 w-4 text-brand-500" aria-hidden="true" />
+          {recipe.total_time_minutes} min total
+        </span>
+        <span className="inline-flex items-center gap-1.5">
           {DIFFICULTY_ICON[recipe.difficulty]} {recipe.difficulty}
         </span>
-        <span>🍽 {recipe.servings} servings</span>
-        <span className="font-semibold text-brand-700">
+        <span className="inline-flex items-center gap-1.5">
+          <Users className="h-4 w-4 text-brand-500" aria-hidden="true" />
+          {recipe.servings} servings
+        </span>
+        <span className="ml-auto inline-flex items-center gap-1.5 font-semibold text-brand-700">
+          <Flame className="h-4 w-4" aria-hidden="true" />
           {Math.round(recipe.match_percentage)}% ingredient match
         </span>
       </div>
@@ -85,42 +198,65 @@ export function RecipeDetailPage() {
         <p className="mt-1">{recipe.match_explanation}</p>
       </div>
 
+      {recipe.steps.length > 0 && (
+        <Button size="lg" onClick={() => setCookingMode(true)} className="w-full sm:w-auto">
+          <ChefHat className="h-5 w-5" aria-hidden="true" />
+          Start cooking
+        </Button>
+      )}
+
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Ingredients</h2>
-        <ul className="flex flex-col divide-y divide-gray-100 rounded-2xl border border-gray-100">
-          {recipe.ingredients.map((ing) => (
-            <li
-              key={ing.name}
-              className="flex items-center justify-between gap-2 px-4 py-3 text-sm"
-            >
-              <span className={ing.have ? "text-gray-800" : "text-gray-400"}>
-                {ing.have ? "✅" : "⬜"} {ing.name}
-                {ing.quantity !== null && (
-                  <span className="text-gray-400">
-                    {" "}
-                    — {ing.quantity} {ing.unit ?? ""}
+        <h2 className="mb-3 text-lg font-semibold text-cream-900">Ingredients</h2>
+        <ul className="flex flex-col divide-y divide-cream-100 rounded-2xl border border-cream-200 bg-white">
+          {recipe.ingredients.map((ing) => {
+            const isChecked = checkedIngredients.has(ing.name);
+            return (
+              <li key={ing.name}>
+                <button
+                  type="button"
+                  onClick={() => toggleIngredient(ing.name)}
+                  className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-cream-50"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <span
+                      className={`flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 transition-colors ${
+                        isChecked ? "border-brand-600 bg-brand-600" : "border-cream-300"
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {isChecked && <Check className="h-3.5 w-3.5 text-white" />}
+                    </span>
+                    <span className={isChecked ? "text-cream-400 line-through" : "text-cream-800"}>
+                      {ing.have ? "✅" : "⬜"} {ing.name}
+                      {ing.quantity !== null && (
+                        <span className="text-cream-400">
+                          {" "}
+                          — {ing.quantity} {ing.unit ?? ""}
+                        </span>
+                      )}
+                    </span>
                   </span>
-                )}
-              </span>
-              {ing.importance !== "normal" && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize text-gray-500">
-                  {ing.importance}
-                </span>
-              )}
-            </li>
-          ))}
+                  {ing.importance !== "normal" && (
+                    <Badge variant={ing.importance === "critical" ? "amber" : "neutral"}>
+                      {ing.importance}
+                    </Badge>
+                  )}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
       {recipe.substitutions.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">Possible substitutions</h2>
-          <ul className="flex flex-col gap-2 text-sm text-gray-600">
+          <h2 className="mb-3 text-lg font-semibold text-cream-900">Possible substitutions</h2>
+          <ul className="flex flex-col gap-2 text-sm text-cream-600">
             {recipe.substitutions.map((s) => (
               <li key={`${s.ingredient}-${s.substitute}`}>
-                Swap <span className="font-medium">{s.ingredient}</span> for{" "}
-                <span className="font-medium">{s.substitute}</span>
-                {s.notes && <span className="text-gray-400"> — {s.notes}</span>}
+                Swap <span className="font-medium text-cream-800">{s.ingredient}</span> for{" "}
+                <span className="font-medium text-cream-800">{s.substitute}</span>
+                {s.notes && <span className="text-cream-400"> — {s.notes}</span>}
               </li>
             ))}
           </ul>
@@ -128,50 +264,46 @@ export function RecipeDetailPage() {
       )}
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Preparation steps</h2>
+        <h2 className="mb-3 text-lg font-semibold text-cream-900">Preparation steps</h2>
         <ol className="flex flex-col gap-3">
-          {recipe.steps.map((step) => (
-            <li key={step.step_number} className="flex gap-3">
-              <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-                {step.step_number}
-              </span>
-              <p className="pt-0.5 text-sm text-gray-700">{step.instruction}</p>
-            </li>
-          ))}
+          {recipe.steps.map((step) => {
+            const isDone = completedSteps.has(step.step_number);
+            return (
+              <li key={step.step_number}>
+                <button
+                  type="button"
+                  onClick={() => toggleStep(step.step_number)}
+                  className="flex w-full gap-3 rounded-2xl border border-cream-200 bg-white p-3 text-left transition-colors hover:border-brand-200"
+                >
+                  <span
+                    className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                      isDone ? "bg-success-500 text-white" : "bg-brand-600 text-white"
+                    }`}
+                  >
+                    {isDone ? <Check className="h-4 w-4" aria-hidden="true" /> : step.step_number}
+                  </span>
+                  <p className={`pt-0.5 text-sm ${isDone ? "text-cream-400 line-through" : "text-cream-700"}`}>
+                    {step.instruction}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Nutrition</h2>
+        <h2 className="mb-3 text-lg font-semibold text-cream-900">Nutrition</h2>
         {recipe.nutrition ? (
-          <div className="rounded-2xl border border-gray-100 p-4">
-            <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-5">
-              <NutritionStat label="Calories" value={Math.round(recipe.nutrition.calories)} />
-              <NutritionStat label="Protein" value={`${Math.round(recipe.nutrition.protein_g)}g`} />
-              <NutritionStat label="Carbs" value={`${Math.round(recipe.nutrition.carbs_g)}g`} />
-              <NutritionStat label="Fat" value={`${Math.round(recipe.nutrition.fat_g)}g`} />
-              <NutritionStat label="Fiber" value={`${Math.round(recipe.nutrition.fiber_g)}g`} />
-            </div>
-            <p className="mt-3 text-xs text-gray-400">
-              {NUTRITION_SOURCE_LABEL[recipe.nutrition.source] ?? recipe.nutrition.source} · per
-              serving.
-            </p>
-          </div>
+          <NutritionBars nutrition={recipe.nutrition} />
         ) : (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-cream-500">
             Nutrition information isn't available for this recipe right now.
           </p>
         )}
       </section>
-    </article>
-  );
-}
 
-function NutritionStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-lg font-bold text-gray-900">{value}</span>
-      <span className="text-xs text-gray-500">{label}</span>
-    </div>
+      {cookingMode && <CookingMode recipe={recipe} onClose={() => setCookingMode(false)} />}
+    </article>
   );
 }

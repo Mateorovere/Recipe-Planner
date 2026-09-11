@@ -9,12 +9,19 @@ from __future__ import annotations
 
 import re
 
-from app.ai.base import LLMProvider, RecipeGenerationProvider, SpeechProvider, VisionProvider
+from app.ai.base import (
+    ImageProvider,
+    LLMProvider,
+    RecipeGenerationProvider,
+    SpeechProvider,
+    VisionProvider,
+)
 from app.ai.types import (
     GeneratedNutrition,
     GeneratedRecipe,
     GeneratedRecipeIngredient,
     GenerationFilters,
+    ImageResult,
     IngredientQuantity,
     RawDetectedIngredient,
 )
@@ -131,3 +138,16 @@ class FakeRecipeGenerationProvider(RecipeGenerationProvider):
                 match_explanation=f"You have {len(ingredients)} matching ingredients.",
             )
         ]
+
+
+class FakeImageProvider(ImageProvider):
+    """Returns a fixed result (or `None`, matching "no key configured") instead
+    of calling Unsplash."""
+
+    def __init__(self, result: ImageResult | None = None) -> None:
+        self.result = result
+        self.queries: list[str] = []
+
+    async def find_image(self, query: str) -> ImageResult | None:
+        self.queries.append(query)
+        return self.result

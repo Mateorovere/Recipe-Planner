@@ -4,13 +4,14 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.types import ImageResult
 from app.core.exceptions import AIProviderError, NoMatchingRecipesError
 from app.models.ingredient import Ingredient
 from app.repositories.favorite_repository import FavoriteRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.ingredient import IngredientQuantityInput
 from app.services.recipe_service import RecipeService
-from tests.fakes import FakeRecipeGenerationProvider
+from tests.fakes import FakeImageProvider, FakeRecipeGenerationProvider
 
 pytestmark = pytest.mark.asyncio
 
@@ -19,6 +20,7 @@ def _service(session: AsyncSession, provider: FakeRecipeGenerationProvider) -> R
     return RecipeService(
         session,
         generation_provider=provider,
+        image_provider=FakeImageProvider(),
         generation_model_name="fake-model",
         default_count=5,
     )
@@ -113,6 +115,49 @@ async def test_favoriting_a_generated_recipe_works(db_session: AsyncSession) -> 
 
     detail = await service.get_detail(recipe_id, user_id=user.id)
     assert detail.is_favorited is True
+
+
+async def test_search_persists_matched_image(db_session: AsyncSession) -> None:
+    provider = FakeRecipeGenerationProvider()
+    image_provider = FakeImageProvider(
+        ImageResult(
+            url="https://images.unsplash.com/photo-1",
+            photographer_name="Jane Doe",
+            photographer_url="https://unsplash.com/@jane",
+        )
+    )
+    service = RecipeService(
+        db_session,
+        generation_provider=provider,
+        image_provider=image_provider,
+        generation_model_name="fake-model",
+        default_count=5,
+    )
+
+    result = await service.search(
+        [IngredientQuantityInput(name="egg")], filters=None, count=1, user_id=None
+    )
+
+    summary = result.recipes[0]
+    assert summary.image_url == "https://images.unsplash.com/photo-1"
+    assert summary.image_attribution is not None
+    assert summary.image_attribution.photographer_name == "Jane Doe"
+    assert summary.image_attribution.photographer_url == "https://unsplash.com/@jane"
+    assert image_provider.queries == ["Fake Recipe with egg food"]
+
+
+async def test_search_persists_recipe_without_image_when_none_found(
+    db_session: AsyncSession,
+) -> None:
+    service = _service(db_session, FakeRecipeGenerationProvider())
+
+    result = await service.search(
+        [IngredientQuantityInput(name="egg")], filters=None, count=1, user_id=None
+    )
+
+    summary = result.recipes[0]
+    assert summary.image_url is None
+    assert summary.image_attribution is None
 
 
 async def test_duplicate_recipe_titles_get_unique_slugs(db_session: AsyncSession) -> None:

@@ -6,6 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Bind-mounted volumes on Docker Desktop for Windows don't reliably emit
+    // inotify events, so the dev server needs to poll for file changes.
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
   },
   test: {
     globals: true,

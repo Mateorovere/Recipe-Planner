@@ -21,6 +21,9 @@ class Recipe(TimestampMixin, Base):
     slug: Mapped[str] = mapped_column(String(220), unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_attribution: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)
+    """{"photographer_name", "photographer_url"} - required by Unsplash's API terms
+    whenever `image_url` came from them."""
 
     prep_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     cook_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
