@@ -13,6 +13,10 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # --- build: compiles static assets, used by the production stage below ---
 FROM base AS build
+# Vite inlines VITE_* vars at build time, so the backend URL must be passed
+# in here rather than read from the environment at container runtime.
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm ci
 COPY . .
 RUN npm run build

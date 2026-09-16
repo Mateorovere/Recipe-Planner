@@ -392,9 +392,12 @@ The repo is structured for, but not currently deployed to, GCP. When ready:
    nginx; `backend/Dockerfile` runs the FastAPI app under Uvicorn).
 2. **Cloud SQL for PostgreSQL** — replace the local `db` container; connect via
    the Cloud SQL Auth Proxy / Unix socket in `DATABASE_URL`.
-3. **Secret Manager** — store `SECRET_KEY`, `DATABASE_URL`, `OPENAI_API_KEY`
-   there instead of plain env vars in production.
+3. **Secret Manager** — store `SECRET_KEY`, `DATABASE_URL`, `OPENAI_API_KEY`,
+   `UNSPLASH_ACCESS_KEY` there instead of plain env vars in production.
 4. **Cloud Run** — stateless services for both the backend and the frontend.
+   The frontend is static (Vite build served by nginx), so `VITE_API_BASE_URL`
+   must be passed as a Docker build arg pointed at the backend's Cloud Run URL
+   — it can't be set as a runtime env var like the others.
 
 `.github/workflows/gcp-deploy.yml` already encodes this shape (build → push to
 Artifact Registry → deploy to Cloud Run, secrets pulled from Secret Manager,
