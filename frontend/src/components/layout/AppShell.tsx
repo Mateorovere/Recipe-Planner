@@ -5,6 +5,7 @@ import { ChefHat, Heart, History, House, UserRound } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import { AppToaster } from "../common/Toast";
+import { Footer } from "./Footer";
 import { useAuthStore } from "../../state/authStore";
 
 const NAV_ITEMS = [
@@ -102,9 +103,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-6 sm:px-6 sm:pb-10">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-6 sm:px-6">{children}</main>
+
+      <Footer />
 
       <nav
         className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-cream-200 bg-white/95 backdrop-blur-md sm:hidden"
