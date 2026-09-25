@@ -55,7 +55,9 @@ export function TextInputForm({ onSubmit, isSubmitting }: TextInputFormProps) {
           </Chip>
         ))}
       </div>
-      {isSubmitting && <AIThinkingIndicator stages={["Reading your list…", "Matching ingredients…"]} />}
+      {isSubmitting && (
+        <AIThinkingIndicator stages={["Reading your list…", "Matching ingredients…"]} />
+      )}
       <Button
         type="submit"
         size="lg"

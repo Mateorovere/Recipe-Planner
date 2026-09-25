@@ -111,7 +111,9 @@ export function RecipeDetailPage() {
               aria-label={recipe.is_favorited ? "Remove from favorites" : "Save recipe"}
               onClick={() =>
                 recipe.is_favorited
-                  ? remove.mutate(undefined, { onError: () => toast.error("Couldn't remove that favorite.") })
+                  ? remove.mutate(undefined, {
+                      onError: () => toast.error("Couldn't remove that favorite."),
+                    })
                   : add.mutate(undefined, { onSuccess: () => toast.success("Saved to favorites.") })
               }
               disabled={isFavoriting}
@@ -282,7 +284,9 @@ export function RecipeDetailPage() {
                   >
                     {isDone ? <Check className="h-4 w-4" aria-hidden="true" /> : step.step_number}
                   </span>
-                  <p className={`pt-0.5 text-sm ${isDone ? "text-cream-400 line-through" : "text-cream-700"}`}>
+                  <p
+                    className={`pt-0.5 text-sm ${isDone ? "text-cream-400 line-through" : "text-cream-700"}`}
+                  >
                     {step.instruction}
                   </p>
                 </button>

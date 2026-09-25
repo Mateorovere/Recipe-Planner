@@ -45,10 +45,7 @@ export function IngredientReviewPage() {
 
       {transcript && (
         <div className="flex items-start gap-3 rounded-2xl bg-cream-200/60 p-4 text-sm text-cream-700">
-          <MessageCircle
-            className="mt-0.5 h-4 w-4 flex-none text-brand-600"
-            aria-hidden="true"
-          />
+          <MessageCircle className="mt-0.5 h-4 w-4 flex-none text-brand-600" aria-hidden="true" />
           <div>
             <p className="mb-1 font-medium text-cream-500">I heard:</p>
             <p className="italic">"{transcript}"</p>
@@ -60,9 +57,8 @@ export function IngredientReviewPage() {
 
       {ingredients.length > 0 && (
         <p className="text-sm text-cream-600">
-          <span className="font-semibold text-brand-700">{ingredients.length}</span>{" "}
-          ingredient{ingredients.length === 1 ? "" : "s"} ready — let's find something
-          delicious.
+          <span className="font-semibold text-brand-700">{ingredients.length}</span> ingredient
+          {ingredients.length === 1 ? "" : "s"} ready — let's find something delicious.
         </p>
       )}
 

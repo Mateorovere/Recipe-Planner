@@ -38,7 +38,8 @@ function normalize(next: {
   max_total_time_minutes?: number | undefined;
   dietary_tags: string[];
 }): RecipeSearchFilters | undefined {
-  const isEmpty = !next.difficulty && !next.max_total_time_minutes && next.dietary_tags.length === 0;
+  const isEmpty =
+    !next.difficulty && !next.max_total_time_minutes && next.dietary_tags.length === 0;
   if (isEmpty) return undefined;
 
   // Build up only the keys that are actually set — avoids assigning explicit

@@ -14,9 +14,7 @@ export function RegisterPage() {
         >
           <ChefHat className="h-6 w-6" />
         </span>
-        <h1 className="font-display text-2xl font-semibold text-cream-900">
-          Create your account
-        </h1>
+        <h1 className="font-display text-2xl font-semibold text-cream-900">Create your account</h1>
         <p className="mt-1 text-sm text-cream-600">
           Save recipes and keep track of your ingredients across visits.
         </p>

@@ -183,7 +183,10 @@ export function CookingMode({ recipe, onClose }: CookingModeProps) {
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               className="fixed inset-x-0 bottom-0 z-20 max-h-[70vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-lifted"
             >
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-cream-200" aria-hidden="true" />
+              <div
+                className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-cream-200"
+                aria-hidden="true"
+              />
               <h2 className="mb-4 text-lg font-semibold text-cream-900">Ingredient checklist</h2>
               <ul className="flex flex-col gap-1">
                 {recipe.ingredients.map((ing) => {
@@ -200,12 +203,19 @@ export function CookingMode({ recipe, onClose }: CookingModeProps) {
                             checked ? "border-brand-600 bg-brand-600" : "border-cream-300"
                           }`}
                         >
-                          {checked && <Check className="h-3.5 w-3.5 text-white" aria-hidden="true" />}
+                          {checked && (
+                            <Check className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+                          )}
                         </span>
-                        <span className={`capitalize ${checked ? "text-cream-400 line-through" : "text-cream-800"}`}>
+                        <span
+                          className={`capitalize ${checked ? "text-cream-400 line-through" : "text-cream-800"}`}
+                        >
                           {ing.name}
                           {ing.quantity !== null && (
-                            <span className="text-cream-400"> — {ing.quantity} {ing.unit ?? ""}</span>
+                            <span className="text-cream-400">
+                              {" "}
+                              — {ing.quantity} {ing.unit ?? ""}
+                            </span>
                           )}
                         </span>
                       </button>

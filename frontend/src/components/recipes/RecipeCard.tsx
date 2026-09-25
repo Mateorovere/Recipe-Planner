@@ -72,9 +72,21 @@ export function RecipeCard({ recipe, isFavorited = false }: RecipeCardProps) {
             </div>
           )}
           {recipe.image_attribution && (
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-medium text-white/90">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(
+                  recipe.image_attribution!.photographer_url,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+              className="absolute bottom-3 right-3 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-medium text-white/90 underline-offset-2 hover:underline"
+            >
               📷 {recipe.image_attribution.photographer_name}
-            </span>
+            </button>
           )}
         </div>
         <div className="flex flex-1 flex-col gap-2 p-4">
@@ -93,7 +105,8 @@ export function RecipeCard({ recipe, isFavorited = false }: RecipeCardProps) {
               {recipe.difficulty.slice(1)}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" aria-hidden="true" />🍽 {recipe.servings} servings
+              <Users className="h-3.5 w-3.5" aria-hidden="true" />
+              🍽 {recipe.servings} servings
             </span>
           </div>
           <p className="text-sm text-cream-600">

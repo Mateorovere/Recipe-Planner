@@ -22,10 +22,7 @@ export function CompactRecipeCard({
   difficulty,
 }: CompactRecipeCardProps) {
   return (
-    <Link
-      to={`/recipes/${id}`}
-      className="group flex w-40 flex-none flex-col gap-2 sm:w-48"
-    >
+    <Link to={`/recipes/${id}`} className="group flex w-40 flex-none flex-col gap-2 sm:w-48">
       <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 to-brand-200 shadow-soft transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-lifted sm:h-32">
         {image_url ? (
           <img

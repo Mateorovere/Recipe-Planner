@@ -42,9 +42,7 @@ export function HistoryPage() {
   return (
     <div className="flex flex-col gap-8">
       <section>
-        <h1 className="mb-3 font-display text-2xl font-semibold text-cream-900">
-          Search history
-        </h1>
+        <h1 className="mb-3 font-display text-2xl font-semibold text-cream-900">Search history</h1>
         {data.searches.length === 0 ? (
           <EmptyState icon="🔍" title="No searches yet" />
         ) : (
