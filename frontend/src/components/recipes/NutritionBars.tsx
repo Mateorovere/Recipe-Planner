@@ -19,7 +19,8 @@ interface MacroBarProps {
 
 function MacroBar({ label, grams, caloriesPerGram, totalCalories, colorClass }: MacroBarProps) {
   const prefersReducedMotion = useReducedMotion();
-  const share = totalCalories > 0 ? Math.min(100, ((grams * caloriesPerGram) / totalCalories) * 100) : 0;
+  const share =
+    totalCalories > 0 ? Math.min(100, ((grams * caloriesPerGram) / totalCalories) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-1.5">

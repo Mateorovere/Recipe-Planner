@@ -21,10 +21,7 @@ export function RecipeResultsPage() {
   const ingredients = decodeIngredientQuery(searchParams.get("q"));
   const [filters, setFilters] = useState<RecipeSearchFilters | undefined>(undefined);
 
-  const { data, isLoading, isError, error, refetch } = useRecipeSearchResults(
-    ingredients,
-    filters,
-  );
+  const { data, isLoading, isError, error, refetch } = useRecipeSearchResults(ingredients, filters);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { data: favorites } = useFavorites();
   const favoritedIds = new Set(favorites?.map((r) => r.id));
@@ -70,7 +67,9 @@ export function RecipeResultsPage() {
               </Button>
             }
             suggestions={
-              hasFilters ? [{ label: "Clear filters and try again", onClick: () => setFilters(undefined) }] : undefined
+              hasFilters
+                ? [{ label: "Clear filters and try again", onClick: () => setFilters(undefined) }]
+                : undefined
             }
           />
         ) : (

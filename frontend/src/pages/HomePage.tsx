@@ -58,8 +58,7 @@ export function HomePage() {
           What's in your kitchen today?
         </h1>
         <p className="relative mx-auto mt-2 max-w-md text-cream-600">
-          Snap a photo, talk it out, or type your ingredients — I'll figure out what you can
-          cook.
+          Snap a photo, talk it out, or type your ingredients — I'll figure out what you can cook.
         </p>
       </div>
 
@@ -155,7 +154,10 @@ export function HomePage() {
       </AnimatePresence>
 
       {isAuthenticated && favorites && favorites.length > 0 && (
-        <RecipeRow title="Continue where you left off" icon={<Heart className="h-5 w-5 text-brand-500" aria-hidden="true" />}>
+        <RecipeRow
+          title="Continue where you left off"
+          icon={<Heart className="h-5 w-5 text-brand-500" aria-hidden="true" />}
+        >
           {favorites.slice(0, 8).map((recipe) => (
             <CompactRecipeCard key={recipe.id} {...recipe} />
           ))}
@@ -163,7 +165,10 @@ export function HomePage() {
       )}
 
       {recentlyViewed.length > 0 && (
-        <RecipeRow title="Recently viewed" icon={<Clock className="h-5 w-5 text-brand-500" aria-hidden="true" />}>
+        <RecipeRow
+          title="Recently viewed"
+          icon={<Clock className="h-5 w-5 text-brand-500" aria-hidden="true" />}
+        >
           {recentlyViewed.map((recipe) => (
             <CompactRecipeCard key={recipe.id} {...recipe} />
           ))}

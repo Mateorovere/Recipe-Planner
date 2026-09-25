@@ -146,7 +146,12 @@ export function AudioRecorder({ onSubmit, isSubmitting }: AudioRecorderProps) {
         }}
       />
 
-      {isSubmitting && <AIThinkingIndicator stages={["Uploading…", "Transcribing what you said…", "Finding ingredients…"]} className="w-full" />}
+      {isSubmitting && (
+        <AIThinkingIndicator
+          stages={["Uploading…", "Transcribing what you said…", "Finding ingredients…"]}
+          className="w-full"
+        />
+      )}
 
       <Button
         size="lg"

@@ -8,16 +8,24 @@ name: GCP Deploy (template)
 # secrets described below are set. Pushing to main or opening a PR never
 # triggers this workflow and never requires GCP credentials.
 #
+# Deploys backend first, reads back its Cloud Run URL, then builds the
+# frontend with that URL baked in (Vite inlines VITE_* vars at build time,
+# so the frontend image can't be built before the backend URL is known) and
+# finally points the backend's CORS_ORIGINS at the frontend's URL.
+#
 # To actually use it:
-#   1. Create a GCP project, an Artifact Registry Docker repo, a Cloud SQL for
-#      PostgreSQL instance, and the secrets below in Secret Manager
-#      (recipe-ai-secret-key, recipe-ai-database-url, recipe-ai-openai-api-key).
+#   1. Create a GCP project, an Artifact Registry Docker repo, a Cloud SQL
+#      for PostgreSQL instance, and these secrets in Secret Manager:
+#      recipe-ai-secret-key, recipe-ai-database-url, recipe-ai-openai-api-key,
+#      recipe-ai-unsplash-key.
 #   2. Set up Workload Identity Federation (preferred over a JSON key) for
 #      GitHub Actions -> GCP, per:
 #      https://github.com/google-github-actions/auth#setting-up-workload-identity-federation
 #   3. Add these as repository variables (Settings -> Secrets and variables ->
-#      Actions -> Variables): GCP_PROJECT_ID, GCP_REGION, GCP_WORKLOAD_IDENTITY_PROVIDER,
-#      GCP_SERVICE_ACCOUNT, ARTIFACT_REGISTRY_REPO.
+#      Actions -> Variables): GCP_PROJECT_ID, GCP_REGION,
+#      GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT,
+#      ARTIFACT_REGISTRY_REPO, GCP_CLOUDSQL_INSTANCE (format
+#      PROJECT_ID:REGION:INSTANCE).
 #   4. Run this workflow via the Actions tab ("Run workflow").
 
 on:
@@ -51,11 +59,14 @@ jobs:
             This is a template workflow - see the comments at the top of gcp-deploy.yml. Skipping deploy."
           fi
 
-  build-and-push:
-    name: Build & push images to Artifact Registry
+  deploy-backend:
+    name: Build, push & deploy backend
     needs: check-configured
     if: needs.check-configured.outputs.configured == 'true'
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    outputs:
+      url: ${{ steps.describe.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,28 +88,6 @@ jobs:
           docker build -t "$IMAGE" ./backend
           docker push "$IMAGE"
 
-      - name: Build & push frontend image
-        run: |
-          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/frontend:${{ github.sha }}"
-          docker build -t "$IMAGE" --target production ./frontend
-          docker push "$IMAGE"
-
-  deploy-cloud-run:
-    name: Deploy to Cloud Run
-    needs: [check-configured, build-and-push]
-    if: needs.check-configured.outputs.configured == 'true'
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    steps:
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
       # Cloud SQL connectivity: pass DATABASE_URL via Secret Manager
       # (recipe-ai-database-url), using the Cloud SQL Auth Proxy socket format,
       # e.g. postgresql+asyncpg://user:pass@/dbname?host=/cloudsql/PROJECT:REGION:INSTANCE
@@ -109,9 +98,47 @@ jobs:
             --region "${{ vars.GCP_REGION }}" \
             --platform managed \
             --allow-unauthenticated \
+            --port 8000 \
+            --min-instances 0 --max-instances 2 --memory 1Gi \
             --add-cloudsql-instances "${{ vars.GCP_CLOUDSQL_INSTANCE }}" \
-            --set-secrets "SECRET_KEY=recipe-ai-secret-key:latest,DATABASE_URL=recipe-ai-database-url:latest,OPENAI_API_KEY=recipe-ai-openai-api-key:latest" \
-            --set-env-vars "ENVIRONMENT=production,VISION_PROVIDER=openai,LLM_PROVIDER=openai,NUTRITION_PROVIDER=openai,SPEECH_PROVIDER=local_whisper"
+            --set-secrets "SECRET_KEY=recipe-ai-secret-key:latest,DATABASE_URL=recipe-ai-database-url:latest,OPENAI_API_KEY=recipe-ai-openai-api-key:latest,UNSPLASH_ACCESS_KEY=recipe-ai-unsplash-key:latest" \
+            --set-env-vars "ENVIRONMENT=production,VISION_PROVIDER=openai,LLM_PROVIDER=openai,RECIPE_GENERATION_PROVIDER=openai,SPEECH_PROVIDER=local_whisper"
+
+      - id: describe
+        name: Read back backend URL
+        run: |
+          URL=$(gcloud run services describe recipe-ai-backend-${{ github.event.inputs.environment }} \
+            --region "${{ vars.GCP_REGION }}" --format='value(status.url)')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+  deploy-frontend:
+    name: Build, push & deploy frontend
+    needs: [check-configured, deploy-backend]
+    if: needs.check-configured.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & push frontend image
+        run: |
+          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/frontend:${{ github.sha }}"
+          docker build -t "$IMAGE" --target production \
+            --build-arg VITE_API_BASE_URL="${{ needs.deploy-backend.outputs.url }}" \
+            ./frontend
+          docker push "$IMAGE"
 
       - name: Deploy frontend
         run: |
@@ -119,4 +146,18 @@ jobs:
             --image "${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/frontend:${{ github.sha }}" \
             --region "${{ vars.GCP_REGION }}" \
             --platform managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --min-instances 0 --max-instances 2 --memory 256Mi
+
+      - id: describe
+        name: Read back frontend URL
+        run: |
+          URL=$(gcloud run services describe recipe-ai-frontend-${{ github.event.inputs.environment }} \
+            --region "${{ vars.GCP_REGION }}" --format='value(status.url)')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Point backend CORS at the frontend URL
+        run: |
+          gcloud run services update recipe-ai-backend-${{ github.event.inputs.environment }} \
+            --region "${{ vars.GCP_REGION }}" \
+            --update-env-vars "CORS_ORIGINS=[\"${{ steps.describe.outputs.url }}\"]"
