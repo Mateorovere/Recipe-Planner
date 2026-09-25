@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { ArrowUpRight, ChefHat, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 
 // lucide-react v1 dropped brand icons, so the GitHub and LinkedIn marks are inlined.
 function GithubIcon(props: SVGProps<SVGSVGElement>) {
@@ -49,61 +49,29 @@ const CONTACT_LINKS: ContactLink[] = [
 export function Footer() {
   return (
     <footer className="border-t border-cream-200 bg-white/70">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
-        <div className="max-w-md">
-          <div className="flex items-center gap-2 font-display text-lg font-semibold text-cream-900">
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-white"
-              aria-hidden="true"
-            >
-              <ChefHat className="h-4 w-4" />
-            </span>
-            Recipe AI
-          </div>
-          <p className="mt-2 text-sm text-cream-600">
-            Designed and built by <span className="font-semibold text-cream-900">Mateo Rovere</span>
-            . Questions, feedback or ideas? I&apos;d love to hear from you.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-cream-500">
-            Get in touch
-          </h2>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-3 sm:gap-3">
-            {CONTACT_LINKS.map(({ label, value, href, Icon }) => {
-              const external = href.startsWith("http");
-              return (
-                <li key={label}>
-                  <a
-                    href={href}
-                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="group flex items-center gap-3 rounded-xl border border-cream-200 bg-white px-3 py-2.5 text-sm text-cream-700 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cream-100 text-cream-600 transition-colors group-hover:bg-white group-hover:text-brand-600">
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                      <span className="text-xs text-cream-500">{label}</span>
-                      <span className="truncate font-medium">{value}</span>
-                    </span>
-                    {external && (
-                      <ArrowUpRight
-                        className="h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-cream-200">
-        <p className="mx-auto max-w-5xl px-4 pb-24 pt-4 text-xs text-cream-500 sm:px-6 sm:pb-4">
-          © {new Date().getFullYear()} Mateo Rovere · Recipe AI
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 pb-24 pt-4 text-xs text-cream-500 sm:flex-row sm:justify-between sm:px-6 sm:pb-4">
+        <p>
+          © {new Date().getFullYear()} · Designed and built by{" "}
+          <span className="font-semibold text-cream-900">Mateo Rovere</span>
         </p>
+        <ul className="flex items-center gap-1">
+          {CONTACT_LINKS.map(({ label, value, href, Icon }) => {
+            const external = href.startsWith("http");
+            return (
+              <li key={label}>
+                <a
+                  href={href}
+                  title={value}
+                  {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-medium text-cream-600 transition-colors hover:bg-brand-50 hover:text-brand-700"
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                  {label}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </footer>
   );
